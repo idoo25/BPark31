@@ -10,7 +10,7 @@ import entities.Message;
 import ocsf.client.ObservableClient;
 import controllers.*;
 import java.io.IOException;
-//.
+
 public class BParkClientApp extends Application {
     private static BParkClient client;
     private static String serverIP = "localhost";
