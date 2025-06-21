@@ -47,6 +47,10 @@ public class BParkClientApp extends Application {
         }
     }
     
+    public static boolean isConnected() {
+        return client != null && client.isConnected();
+    }
+    
     public static void switchToMainScreen(String userType) {
         try {
             Stage stage = new Stage();
@@ -147,6 +151,10 @@ public class BParkClientApp extends Application {
     }
     
     // Getters and setters
+    
+    public static BParkClient getClient() {
+        return client;
+    } 
     public static String getCurrentUser() {
         return currentUser;
     }

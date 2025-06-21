@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import controllers.LoginController;
 import entities.Message;
 import entities.ParkingOrder;
 import entities.ParkingReport;
@@ -110,13 +111,28 @@ public class ClientMessageHandler {
     // Message Type Handlers
     
     private static void handleLoginResponse(Message message) {
-        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+       ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+        
         if (subscriber != null) {
             BParkClientApp.setCurrentUser(subscriber.getSubscriberCode());
             BParkClientApp.setUserType(subscriber.getUserType());
             BParkClientApp.switchToMainScreen(subscriber.getUserType());
+            
+            Platform.runLater(() -> 
+            LoginController.getInstance().handleLoginSuccess(subscriber.getUserType())
+            );
         } else {
-            showAlert("Login Failed", "Invalid username or user not found");
+        	// Show alert
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Login Failed");
+                alert.setHeaderText(null);
+                alert.setContentText("Invalid username/userCode or user not found.");
+                alert.showAndWait();
+
+                // Reset fields so the user can try again
+                LoginController.getInstance().handleLoginFailed(null);
+            });
         }
     }
     

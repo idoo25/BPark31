@@ -14,7 +14,7 @@ import java.util.Random;
 import entities.ParkingOrder;
 import entities.ParkingSubscriber;
 import services.EmailService;
-//bdika
+
 /**
  * Enhanced ParkingController with email notifications
  * Updated to work with unified parkinginfo table structure
@@ -165,11 +165,12 @@ public class ParkingController {
 
     // ========== ALL YOUR EXISTING METHODS UPDATED ==========
     
-    public String checkLogin(String userName, String password) {
-        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
+    public String checkLogin(String userName, String userCode) {
+        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ? AND User_ID = ?";
         
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
+            stmt.setString(2, userCode);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getString("UserTypeEnum");

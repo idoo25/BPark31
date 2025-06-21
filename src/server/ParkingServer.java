@@ -72,7 +72,7 @@ public class ParkingServer extends AbstractServer {
     private void initializeConnectionPool() {
         connectionPoolTimer = Executors.newScheduledThreadPool(POOL_SIZE);
         
-        // Start connection pool monitoring timer
+        // Start connection pool monitoring timer 
         connectionPoolTimer.scheduleAtFixedRate(() -> {
             synchronized (clientsMap) {
                 System.out.println("Connection Pool Status - Active connections: " + clientsMap.size());
@@ -98,26 +98,28 @@ public class ParkingServer extends AbstractServer {
      * Following your exact handleMessageFromClient pattern
      */
     public synchronized void handleMessageFromClient(Object msg, ConnectionToClient client) {
-        System.out.println("Message received: " + msg + " from " + client);
-        
-        try {
-            // Check if the message is in byte array form (following your pattern)
-            if (msg instanceof byte[]) {
-                msg = deserialize(msg);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        
-        // Handle Message objects (following your pattern)
-        if (msg instanceof Message) {
-            handleMessageObject((Message) msg, client);
-        }
-        
-        // Handle String messages (following your pattern)
-        if (msg instanceof String) {
-            handleStringMessage((String) msg, client);
-        }
+       
+    	 try {
+    	        // If the message is a byte array, deserialize it
+    	        if (msg instanceof byte[]) {
+    	            msg = deserialize(msg);
+    	        }
+
+    	        // Print the actual deserialized message
+    	        if (msg instanceof Message) {
+    	            Message message = (Message) msg;
+    	            System.out.println("Message received: " + message.getType() + " from " + client);
+    	            handleMessageObject(message, client);
+    	        } else if (msg instanceof String) {
+    	            System.out.println("Message received: " + msg + " from " + client);
+    	            handleStringMessage((String) msg, client);
+    	        } else {
+    	            System.out.println("Unknown message type from " + client);
+    	        }
+
+    	    } catch (Exception ex) {
+    	        ex.printStackTrace();
+    	    }
     }
     
     /**
@@ -129,11 +131,26 @@ public class ParkingServer extends AbstractServer {
         try {
             switch (message.getType()) {
             case SUBSCRIBER_LOGIN:
-                String subscriberCode = (String) message.getContent();
-                ParkingSubscriber subscriber = parkingController.getUserInfo(subscriberCode);
-                ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, subscriber);
-                client.sendToClient(serialize(ret));
-                break;
+            	   String[] loginParts = ((String) message.getContent()).split(",");
+                   if (loginParts.length < 2) {
+                       ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, "ERROR: Missing username or user code");
+                       client.sendToClient(serialize(ret));
+                       break;
+                   }
+
+                   String username = loginParts[0].trim();
+                   String userCode = loginParts[1].trim();
+
+                   ParkingSubscriber subscriber = parkingController.getUserInfo(username);
+                   
+                   if (subscriber != null && String.valueOf(subscriber.getSubscriberID()).equals(userCode)) {
+                       ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE, subscriber);
+                   } else {
+                       ret = new Message(MessageType.SUBSCRIBER_LOGIN_RESPONSE,null);
+                   }
+                   
+                   client.sendToClient(serialize(ret));
+                   break;
                 
             case CHECK_PARKING_AVAILABILITY:
                 int availableSpots = parkingController.getAvailableParkingSpots();
