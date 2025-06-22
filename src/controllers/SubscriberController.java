@@ -1,12 +1,16 @@
 package controllers;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.GridPane;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -55,12 +59,18 @@ public class SubscriberController implements Initializable {
     // Current view container
     @FXML private VBox mainContent;
     
+    private static boolean manualCheckRequested = false;
+    
+    public static void setManualCheckRequested(boolean value) {
+        manualCheckRequested = value;
+    }
+    
     private ObservableList<ParkingOrder> parkingHistory = FXCollections.observableArrayList();
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupUI();
-        loadInitialData();
+       
     }
     
     private void setupUI() {
@@ -94,12 +104,16 @@ public class SubscriberController implements Initializable {
         }
     }
     
-    private void loadInitialData() {
-        // Check parking availability on startup
-        checkParkingAvailability();
-    }
+
     
     // ===== Action Handlers =====
+    
+    @FXML
+    private void handleShowAvailableSpots() {
+    	setManualCheckRequested(true);
+        Message checkMsg = new Message(Message.MessageType.CHECK_PARKING_AVAILABILITY, null);
+        BParkClientApp.sendMessage(checkMsg);
+    }
     
     @FXML
     private void checkParkingAvailability() {
@@ -232,20 +246,7 @@ public class SubscriberController implements Initializable {
         });
     }
     
-    @FXML
-    private void handleUpdateProfile() {
-        String phone = txtPhone.getText().trim();
-        String email = txtEmail.getText().trim();
-        
-        if (phone.isEmpty() || email.isEmpty()) {
-            showAlert("Error", "Please fill in all fields");
-            return;
-        }
-        
-        String updateData = BParkClientApp.getCurrentUser() + "," + phone + "," + email;
-        Message msg = new Message(MessageType.UPDATE_SUBSCRIBER_INFO, updateData);
-        BParkClientApp.sendMessage(msg);
-    }
+
     
     @FXML
     private void handleLogout() {
@@ -276,8 +277,15 @@ public class SubscriberController implements Initializable {
     
     @FXML
     private void showProfileView() {
-        // Show profile update section
-        showAlert("Update Profile", "Update your phone and email information");
+    	  try {
+    		// Load the FXML file for the profile update screen
+              FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/UpdateProfileView.fxml"));
+           // Load the actual UI components from the FXML file into a Node object
+              Node profileView = loader.load();
+              mainContent.getChildren().setAll(profileView);  // This replaces the center of the UI
+          } catch (IOException e) {
+              e.printStackTrace();
+          }
     }
     
     // ===== UI Update Methods =====

@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import entities.ParkingOrder;
@@ -933,22 +934,50 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
      */
     public String updateSubscriberInfo(String updateData) {
         // Format: userName,phone,email
-        String[] data = updateData.split(",");
-        if (data.length != 3) {
+        String[] data = updateData.split(",", -1); // -1 keeps empty values
+        if (data.length != 4) {
             return "Invalid update data format";
         }
-        
+
         String userName = data[0];
         String phone = data[1];
         String email = data[2];
+        String carNumber = data[3];
+
+        // Build the update query dynamically
+        StringBuilder queryBuilder = new StringBuilder("UPDATE users SET ");
+        List<String> fields = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+
+        if (!phone.isEmpty()) {
+            fields.add("Phone = ?");
+            values.add(phone);
+        }
+
+        if (!email.isEmpty()) {
+            fields.add("Email = ?");
+            values.add(email);
+        }
         
-        String qry = "UPDATE users SET Phone = ?, Email = ? WHERE UserName = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, phone);
-            stmt.setString(2, email);
-            stmt.setString(3, userName);
-            
+        if (!carNumber.isEmpty()) {
+            fields.add("CarNum = ?");
+            values.add(carNumber);
+        }
+
+        if (fields.isEmpty()) {
+            return "No changes to update.";
+        }
+
+        queryBuilder.append(String.join(", ", fields));
+        queryBuilder.append(" WHERE UserName = ?");
+
+        try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+            // Set the values for updated fields
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setString(i + 1, values.get(i));
+            }
+            stmt.setString(values.size() + 1, userName); // Set username as the last parameter
+
             int rowsUpdated = stmt.executeUpdate();
             if (rowsUpdated > 0) {
                 return "Subscriber information updated successfully";
@@ -956,6 +985,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         } catch (SQLException e) {
             System.out.println("Error updating subscriber info: " + e.getMessage());
         }
+
         return "Failed to update subscriber information";
     }
 

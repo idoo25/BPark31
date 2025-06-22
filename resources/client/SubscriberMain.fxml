@@ -50,7 +50,13 @@
             </font>
          </Label>
          
-         <Separator />
+         <Separator /> 
+         
+          <Button fx:id="btnShowAvailableSpots"
+        		 text="Show Available Spots"
+        		 onAction="#handleShowAvailableSpots"
+       			 layoutX="20" layoutY="100"
+        		 prefWidth="200" />
          
          <Button fx:id="btnEnterParking" text="Enter Parking Now" 
                  onAction="#handleImmediateParking" 
@@ -89,6 +95,8 @@
          <Button fx:id="btnUpdateProfile" text="Update Profile" 
                  onAction="#showProfileView" 
                  prefWidth="180" styleClass="menu-button" />
+                 
+                 
       </VBox>
    </left>
    
