@@ -64,7 +64,12 @@ public class ClientMessageHandler {
             case CANCELLATION_RESPONSE:
                 handleCancellationResponse(message);
                 break;
+             
+            case EXTENSION_RESPONSE:
+            	handleExtendParkingResponse(message);
+                break;
                 
+        
             default:
                 System.out.println("Unknown message type: " + message.getType());
         }
@@ -227,6 +232,15 @@ public class ClientMessageHandler {
     
     private static void handleStringAvailableSpots(String data) {
         showAlert("Available Spots", "Current available spots: " + data);
+    }
+    
+    private static void handleExtendParkingResponse(Message message) { //**
+        String response = (String) message.getContent();
+        if (response.contains("extended")) {
+            showAlert("Extension Successful", response);
+        } else {
+            showAlert("Extension Failed", response);
+        }
     }
     
     // Utility methods

@@ -207,43 +207,14 @@ public class SubscriberController implements Initializable {
     }
     
     @FXML
-    private void handleExtendParking() {
-        Dialog<String[]> dialog = new Dialog<>();
-        dialog.setTitle("Extend Parking Time");
-        dialog.setHeaderText("Enter parking code and extension hours:");
-        
-        // Create custom dialog content
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        
-        TextField codeField = new TextField();
-        ComboBox<String> hoursCombo = new ComboBox<>();
-        hoursCombo.getItems().addAll("1", "2", "3", "4");
-        hoursCombo.setValue("1");
-        
-        grid.add(new Label("Parking Code:"), 0, 0);
-        grid.add(codeField, 1, 0);
-        grid.add(new Label("Extension Hours:"), 0, 1);
-        grid.add(hoursCombo, 1, 1);
-        
-        dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                return new String[]{codeField.getText(), hoursCombo.getValue()};
-            }
-            return null;
-        });
-        
-        dialog.showAndWait().ifPresent(result -> {
-            if (result[0] != null && !result[0].trim().isEmpty()) {
-                String extensionData = result[0] + "," + result[1];
-                Message msg = new Message(MessageType.EXTEND_PARKING, extensionData);
-                BParkClientApp.sendMessage(msg);
-            }
-        });
+    private void handleExtendParking() { //***
+    	   try {
+    	        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ExtendParkingView.fxml"));
+    	        Node extendParkingView = loader.load();
+    	        mainContent.getChildren().setAll(extendParkingView); // like your UpdateProfile method
+    	    } catch (IOException e) {
+    	        e.printStackTrace();
+    	    }
     }
     
 

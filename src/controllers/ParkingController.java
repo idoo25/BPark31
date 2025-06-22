@@ -780,12 +780,12 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                             updateStmt.executeUpdate();
                             
                             // SEND EMAIL NOTIFICATION
-                            if (userEmail != null && userName != null) {
-                                EmailService.sendExtensionConfirmation(
-                                    userEmail, userName, parkingCodeStr, 
-                                    additionalHours, newEstimatedEnd.toString()
-                                );
-                            }
+//                            if (userEmail != null && userName != null) {
+//                                EmailService.sendExtensionConfirmation(
+//                                    userEmail, userName, parkingCodeStr, 
+//                                    additionalHours, newEstimatedEnd.toString()
+//                                );
+//                            }
                             
                             return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
                         }

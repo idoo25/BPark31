@@ -264,6 +264,26 @@ public class ParkingServer extends AbstractServer {
                 }
                 client.sendToClient(serialize(ret));
                 break;
+               
+            case REQUEST_EXTENSION:
+                try {
+                    String[] parts = ((String) message.getContent()).split(",");
+                    if (parts.length != 2) {
+                        ret = new Message(MessageType.EXTENSION_RESPONSE, "Invalid extension format.");
+                    } else {
+                        String parkingCode = parts[0].trim();
+                        int additionalHours = Integer.parseInt(parts[1].trim());
+                        String result = parkingController.extendParkingTime(parkingCode, additionalHours);
+                                                
+                        ret = new Message(MessageType.EXTENSION_RESPONSE, result);
+                    }
+                } catch (NumberFormatException e) {
+                    ret = new Message(MessageType.EXTENSION_RESPONSE, "Invalid number format for extension hours.");
+                }
+                client.sendToClient(serialize(ret));
+                break;
+         
+        
                 
             default:
                 System.out.println("Unknown message type: " + message.getType());
