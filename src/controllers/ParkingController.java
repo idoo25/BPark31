@@ -750,7 +750,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
 
-            // Get the current parking info and user data
+            // Get current parking info and user data
             String getUserQry = """
                 SELECT pi.*, u.Email, u.Name 
                 FROM parkinginfo pi 
@@ -775,13 +775,14 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                             SELECT 1 FROM parkinginfo
                             WHERE ParkingSpot_ID = ?
                               AND statusEnum = 'preorder'
-                              AND Estimated_start_time BETWEEN ? AND ?
+                              AND Estimated_start_time > ?
+                              AND Estimated_start_time < ?
                         """;
 
                         try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
                             checkStmt.setInt(1, parkingSpotId);
-                            checkStmt.setTimestamp(2, currentEstimatedEnd);
-                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
+                            checkStmt.setTimestamp(2, currentEstimatedEnd);  // after current end
+                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));  // before new end
 
                             try (ResultSet conflictRs = checkStmt.executeQuery()) {
                                 if (conflictRs.next()) {
@@ -790,7 +791,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                             }
                         }
 
-                        // ❗ Update end time and mark as extended
+                        // ✅ Update estimated end time and mark as extended
                         String updateQry = """
                             UPDATE parkinginfo 
                             SET Estimated_end_time = ?, IsExtended = 'yes' 
@@ -802,7 +803,6 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                             updateStmt.setInt(2, parkingCode);
                             updateStmt.executeUpdate();
 
-                         
                             try {
                                 if (userEmail != null && userName != null) {
                                     EmailService.sendExtensionConfirmation(
@@ -811,7 +811,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                                     );
                                 }
                             } catch (Exception e) {
-                                System.out.println(" Email sending failed: " + e.getMessage());
+                                System.out.println("Email sending failed: " + e.getMessage());
                             }
 
                             return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
