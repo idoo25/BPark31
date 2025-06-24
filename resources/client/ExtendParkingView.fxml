@@ -25,7 +25,7 @@
         <ComboBox fx:id="hoursCombo" prefWidth="250"/>
     </HBox>
 
-    <Button text="Submit" onAction="#handleSubmit" prefWidth="120"/>
+    <Button fx:id="extendButton" text="Submit" onAction="#handleSubmit" prefWidth="120"/>
 
     <Label fx:id="statusLabel" text="" style="-fx-text-fill: green;"/>
 </VBox>

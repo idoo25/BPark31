@@ -96,6 +96,7 @@ public class EmailService {
     
     public static boolean sendExtensionConfirmation(String recipientEmail, String customerName, 
                                                   String parkingCode, int hours, String newEndTime) {
+    	
         return sendNotification(NotificationType.EXTENSION_CONFIRMATION, recipientEmail, customerName, 
                               parkingCode, hours, newEndTime);
     }

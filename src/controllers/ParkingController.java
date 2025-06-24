@@ -746,47 +746,74 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         if (additionalHours < 1 || additionalHours > 4) {
             return "Can only extend parking by 1-4 hours";
         }
-        
+
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
-            
-            // Get user info for email notification
+
+            // Get the current parking info and user data
             String getUserQry = """
                 SELECT pi.*, u.Email, u.Name 
                 FROM parkinginfo pi 
                 JOIN users u ON pi.User_ID = u.User_ID 
                 WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
-                """;
-            
+            """;
+
             try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
                 stmt.setInt(1, parkingCode);
+
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
                         String userEmail = rs.getString("Email");
                         String userName = rs.getString("Name");
-                        
+                        int parkingSpotId = rs.getInt("ParkingSpot_ID");
+
                         LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime().plusHours(additionalHours);
-                        
+
+                        // Check for conflicting reservation (same spot, preorder status)
+                        String conflictCheckQry = """
+                            SELECT 1 FROM parkinginfo
+                            WHERE ParkingSpot_ID = ?
+                              AND statusEnum = 'preorder'
+                              AND Estimated_start_time BETWEEN ? AND ?
+                        """;
+
+                        try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
+                            checkStmt.setInt(1, parkingSpotId);
+                            checkStmt.setTimestamp(2, currentEstimatedEnd);
+                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
+
+                            try (ResultSet conflictRs = checkStmt.executeQuery()) {
+                                if (conflictRs.next()) {
+                                    return "Cannot extend parking: a reservation is scheduled during the extension period.";
+                                }
+                            }
+                        }
+
+                        // ❗ Update end time and mark as extended
                         String updateQry = """
                             UPDATE parkinginfo 
                             SET Estimated_end_time = ?, IsExtended = 'yes' 
                             WHERE ParkingInfo_ID = ?
-                            """;
-                        
+                        """;
+
                         try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
                             updateStmt.setTimestamp(1, Timestamp.valueOf(newEstimatedEnd));
                             updateStmt.setInt(2, parkingCode);
                             updateStmt.executeUpdate();
-                            
-                            // SEND EMAIL NOTIFICATION
-//                            if (userEmail != null && userName != null) {
-//                                EmailService.sendExtensionConfirmation(
-//                                    userEmail, userName, parkingCodeStr, 
-//                                    additionalHours, newEstimatedEnd.toString()
-//                                );
-//                            }
-                            
+
+                         
+                            try {
+                                if (userEmail != null && userName != null) {
+                                    EmailService.sendExtensionConfirmation(
+                                        userEmail, userName, parkingCodeStr,
+                                        additionalHours, newEstimatedEnd.toString()
+                                    );
+                                }
+                            } catch (Exception e) {
+                                System.out.println(" Email sending failed: " + e.getMessage());
+                            }
+
                             return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
                         }
                     }
@@ -797,6 +824,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         } catch (SQLException e) {
             System.out.println("Error extending parking time: " + e.getMessage());
         }
+
         return "Invalid parking code or parking session not active";
     }
 

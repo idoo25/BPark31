@@ -7,10 +7,35 @@ import entities.Message;
 import entities.Message.MessageType;
 
 public class ExtendParkingController {
+	
+	private static ExtendParkingController instance;
+	private SubscriberController parentController;
+
+	public ExtendParkingController() {
+	    instance = this;
+	}
+
+	public static ExtendParkingController getInstance() {
+	    return instance;
+	}
+	
+	public void setParentController(SubscriberController controller) {
+	    this.parentController = controller;
+	}
+	
+	public void onExtensionSuccess() {
+	    statusLabel.setText("Parking extended successfully.");
+
+	    if (parentController != null) {
+	        parentController.disableExtendButton();  // disables left menu button
+	    }
+	}
+
 
     @FXML private TextField codeField;
     @FXML private ComboBox<String> hoursCombo;
     @FXML private Label statusLabel;
+    @FXML private Button extendButton;
 
     @FXML
     public void initialize() {

@@ -88,9 +88,10 @@
                  onAction="#handleLostCode" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Extend Parking" 
-                 onAction="#handleExtendParking" 
-                 prefWidth="180" styleClass="menu-button" />
+         <Button fx:id="btnExtendParking"
+        		 text="Extend Parking" 
+        	     onAction="#handleExtendParking"
+        		 prefWidth="180" styleClass="menu-button" />
          
          <Button fx:id="btnUpdateProfile" text="Update Profile" 
                  onAction="#showProfileView" 

@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import controllers.ExtendParkingController;
 import controllers.LoginController;
 import entities.Message;
 import entities.ParkingOrder;
@@ -234,13 +235,21 @@ public class ClientMessageHandler {
         showAlert("Available Spots", "Current available spots: " + data);
     }
     
-    private static void handleExtendParkingResponse(Message message) { //**
+    private static void handleExtendParkingResponse(Message message) {
         String response = (String) message.getContent();
-        if (response.contains("extended")) {
-            showAlert("Extension Successful", response);
-        } else {
-            showAlert("Extension Failed", response);
-        }
+
+        Platform.runLater(() -> {
+            if (response.contains("extended")) {
+                showAlert("Extension Successful", response);
+
+                ExtendParkingController controller = ExtendParkingController.getInstance();
+                if (controller != null) {
+                    controller.onExtensionSuccess();
+                }
+            } else {
+                showAlert("Extension Failed", response);
+            }
+        });
     }
     
     // Utility methods
