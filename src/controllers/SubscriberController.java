@@ -33,7 +33,7 @@ public class SubscriberController implements Initializable {
     @FXML private Button btnLostCode;
     @FXML private Button btnUpdateProfile;
     @FXML private Button btnLogout;
-    @FXML private Button btnExtendParking;
+    
     
     // Parking entry/exit controls
     @FXML private TextField txtParkingCode;
@@ -208,27 +208,17 @@ public class SubscriberController implements Initializable {
     }
     
     @FXML
-    private void handleExtendParking() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ExtendParkingView.fxml"));
-            Node extendParkingView = loader.load();
-
-            ExtendParkingController controller = loader.getController();
-            controller.setParentController(this); 
-
-            mainContent.getChildren().setAll(extendParkingView); 
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void handleExtendParking() { //***
+    	   try {
+    	        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ExtendParkingView.fxml"));
+    	        Node extendParkingView = loader.load();
+    	        mainContent.getChildren().setAll(extendParkingView); 
+    	    } catch (IOException e) {
+    	        e.printStackTrace();
+    	    }
     }
-    
    
 
-    public void disableExtendButton() {
-        btnExtendParking.setDisable(true);
-    }
-    
 
     
     @FXML

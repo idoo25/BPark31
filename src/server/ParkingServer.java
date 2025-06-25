@@ -90,6 +90,8 @@ public class ParkingServer extends AbstractServer {
             return !client.isAlive();
         });
     }
+    
+    
 
     // Instance methods ************************************************
 
@@ -282,12 +284,21 @@ public class ParkingServer extends AbstractServer {
                 }
                 client.sendToClient(serialize(ret));
                 break;
+                
+            case REQUEST_SUBSCRIBER_DATA: {
+                String userName = (String) message.getContent();
+                ParkingSubscriber userInfo = parkingController.getUserInfo(userName); // use your DB instance
+                Message response = new Message(MessageType.SUBSCRIBER_DATA_RESPONSE, userInfo);
+                client.sendToClient(response);
+                break;
+            }
          
         
                 
             default:
                 System.out.println("Unknown message type: " + message.getType());
                 break;
+                
             }
         } catch (IOException e) {
             e.printStackTrace();

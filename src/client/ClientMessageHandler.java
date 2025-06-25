@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import controllers.ExtendParkingController;
 import controllers.LoginController;
+import controllers.UpdateProfileController;
 import entities.Message;
 import entities.ParkingOrder;
 import entities.ParkingReport;
@@ -56,6 +57,10 @@ public class ClientMessageHandler {
                 
             case UPDATE_SUBSCRIBER_RESPONSE:
                 handleUpdateResponse(message);
+                break;
+                
+            case SUBSCRIBER_DATA_RESPONSE:
+                handleSubscriberDataResponse(message);
                 break;
                 
             case ACTIVATION_RESPONSE:
@@ -206,6 +211,19 @@ public class ClientMessageHandler {
         showAlert("Update Profile", response);
     }
     
+    private static void handleSubscriberDataResponse(Message message) {
+        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+
+        Platform.runLater(() -> {
+            UpdateProfileController controller = BParkClientApp.getUpdateProfileController();
+            controller.setFieldPrompts(
+                subscriber.getEmail(),
+                subscriber.getPhoneNumber(),
+                subscriber.getCarNumber()
+            );
+        });
+    }
+    
     private static void handleActivationResponse(Message message) {
         String response = (String) message.getContent();
         if (response.contains("successful") || response.contains("activated")) {
@@ -235,21 +253,13 @@ public class ClientMessageHandler {
         showAlert("Available Spots", "Current available spots: " + data);
     }
     
-    private static void handleExtendParkingResponse(Message message) {
+    private static void handleExtendParkingResponse(Message message) { //**
         String response = (String) message.getContent();
-
-        Platform.runLater(() -> {
-            if (response.contains("extended")) {
-                showAlert("Extension Successful", response);
-
-                ExtendParkingController controller = ExtendParkingController.getInstance();
-                if (controller != null) {
-                    controller.onExtensionSuccess();
-                }
-            } else {
-                showAlert("Extension Failed", response);
-            }
-        });
+        if (response.contains("extended")) {
+            showAlert("Extension Successful", response);
+        } else {
+            showAlert("Extension Failed", response);
+        }
     }
     
     // Utility methods

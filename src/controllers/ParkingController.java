@@ -21,10 +21,37 @@ import services.EmailService;
  * Updated to work with unified parkinginfo table structure
  */
 public class ParkingController {
+	private int subscriberID;
+    private String firstName;
+    private String phoneNumber;
+    private String email;
+    private String carNumber;
+    private String subscriberCode;
+    private String userType;
     protected Connection conn;
     public int successFlag;
     private static final int TOTAL_PARKING_SPOTS = 100;
     private static final double RESERVATION_THRESHOLD = 0.4;
+    
+    
+    // Getters
+    public int getSubscriberID() { return subscriberID; }
+    public String getFirstName() { return firstName; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public String getEmail() { return email; }
+    public String getCarNumber() { return carNumber; }
+    public String getSubscriberCode() { return subscriberCode; }
+    public String getUserType() { return userType; }
+
+    // Setters
+    public void setSubscriberID(int subscriberID) { this.subscriberID = subscriberID; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setEmail(String email) { this.email = email; }
+    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
+    public void setSubscriberCode(String subscriberCode) { this.subscriberCode = subscriberCode; }
+    public void setUserType(String userType) { this.userType = userType; }
+
     
     /**
      * Role-based access control for all parking operations
@@ -210,23 +237,6 @@ public class ParkingController {
         return null;
     }
 
-    /**
-     * Gets the number of available parking spots
-     */
-//    public int getAvailableParkingSpots() {
-//        String qry = "SELECT COUNT(*) as available FROM ParkingSpot WHERE isOccupied = false";
-//        
-//        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-//            try (ResultSet rs = stmt.executeQuery()) {
-//                if (rs.next()) {
-//                    return rs.getInt("available");
-//                }
-//            }
-//        } catch (SQLException e) {
-//            System.out.println("Error getting available spots: " + e.getMessage());
-//        }
-//        return 0;
-//    }
 
     /**
      * Checks if reservation is possible (40% of spots must be available)
@@ -744,7 +754,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
      */
     public String extendParkingTime(String parkingCodeStr, int additionalHours) {
         if (additionalHours < 1 || additionalHours > 4) {
-            return "Can only extend parking by 1-4 hours";
+            return "Can only extend parking by 1–4 hours.";
         }
 
         try {
@@ -763,6 +773,13 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
 
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
+                        String isExtended = rs.getString("IsExtended");
+
+                        // ❌ Block if already extended once
+                        if ("yes".equalsIgnoreCase(isExtended)) {
+                            return "Cannot extend again: You already extended this active parking session.";
+                        }
+
                         Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
                         String userEmail = rs.getString("Email");
                         String userName = rs.getString("Name");
@@ -770,7 +787,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
 
                         LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime().plusHours(additionalHours);
 
-                        // Check for conflicting reservation (same spot, preorder status)
+                        // Check for conflicting reservation
                         String conflictCheckQry = """
                             SELECT 1 FROM parkinginfo
                             WHERE ParkingSpot_ID = ?
@@ -781,12 +798,12 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
 
                         try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
                             checkStmt.setInt(1, parkingSpotId);
-                            checkStmt.setTimestamp(2, currentEstimatedEnd);  // after current end
-                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));  // before new end
+                            checkStmt.setTimestamp(2, currentEstimatedEnd);
+                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
 
                             try (ResultSet conflictRs = checkStmt.executeQuery()) {
                                 if (conflictRs.next()) {
-                                    return "Cannot extend parking: a reservation is scheduled during the extension period.";
+                                    return "Cannot extend parking: A reservation is scheduled during the extension period.";
                                 }
                             }
                         }
@@ -820,12 +837,12 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
                 }
             }
         } catch (NumberFormatException e) {
-            return "Invalid parking code format";
+            return "Invalid parking code format.";
         } catch (SQLException e) {
             System.out.println("Error extending parking time: " + e.getMessage());
         }
 
-        return "Invalid parking code or parking session not active";
+        return "Invalid parking code or parking session not active.";
     }
 
     /**

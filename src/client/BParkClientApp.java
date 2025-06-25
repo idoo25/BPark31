@@ -26,6 +26,10 @@ public class BParkClientApp extends Application {
         showLoginScreen(primaryStage);
     }
     
+    public static UpdateProfileController getUpdateProfileController() {
+        return UpdateProfileController.instance;
+    }
+    
     private void showLoginScreen(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/Login.fxml"));
         Parent root = loader.load();
