@@ -134,7 +134,7 @@ public class ParkingOrder implements Serializable {
         if (entryTime != null) {
             return entryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
-        return "";
+        return "N/A";
     }
     
     public String getFormattedExitTime() {
@@ -148,7 +148,7 @@ public class ParkingOrder implements Serializable {
         if (expectedExitTime != null) {
             return expectedExitTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
-        return "";
+        return "N/A";
     }
     
     public long getParkingDurationMinutes() {
