@@ -9,6 +9,7 @@ import java.io.Serializable;
  * @author ParkB Team
  * @version 1.0
  */
+
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
 
@@ -216,6 +217,7 @@ public class Message implements Serializable {
 		
 		SHOW_SUBSCRIBER_DETAILS,
 
+		
 	}
 
 	// Constructors ******************************************************

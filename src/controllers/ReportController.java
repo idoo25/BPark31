@@ -15,6 +15,7 @@ import server.DBController;
  * ReportController handles report generation for the ParkB parking management
  * system. Updated to work with unified parkinginfo table structure
  */
+
 public class ReportController {
 	protected Connection conn;
 	public int successFlag;

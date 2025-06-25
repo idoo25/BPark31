@@ -11,7 +11,7 @@
 	fx:controller="controllers.ManagerController" prefHeight="800.0"
 	prefWidth="1200.0">
 
-	<!-- Top Bar -->
+	<!-- Top Bar  -->
 	<top>
 		<VBox spacing="10" style="-fx-background-color: #2C3E50;">
 			<padding>

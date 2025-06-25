@@ -35,6 +35,7 @@ import javafx.util.Duration;
 
 public class ManagerController implements Initializable {
 
+	
 	// Dashboard Labels
 	@FXML
 	private Label lblTotalSpots;

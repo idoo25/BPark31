@@ -30,6 +30,7 @@ import javafx.util.Duration;
 
 public class AttendantController implements Initializable {
 
+	
 	// Registration form fields
 	@FXML
 	private TextField txtName;

@@ -11,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import ocsf.client.ObservableClient;
 
+
 public class BParkClientApp extends Application {
 	private static BParkClient client;
 	private static String serverIP = "localhost";

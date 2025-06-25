@@ -33,6 +33,7 @@ import serverGUI.ServerPortFrame;
 public class ParkingServer extends AbstractServer {
     // Class variables *************************************************
     
+	
     /**
      * The default port to listen on.
      */

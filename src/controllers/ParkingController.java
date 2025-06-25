@@ -19,6 +19,7 @@ import services.EmailService;
  * Enhanced ParkingController with email notifications Updated to work with
  * unified parkinginfo table structure
  */
+
 public class ParkingController {
 	protected Connection conn;
 	public int successFlag;

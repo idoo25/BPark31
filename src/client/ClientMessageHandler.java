@@ -17,6 +17,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 
+
 public class ClientMessageHandler {
 
 	/**

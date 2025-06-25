@@ -40,7 +40,7 @@
 		</VBox>
 	</top>
 
-	<!-- Main Content -->
+	<!-- Main Content  -->
 	<center>
 		<TabPane tabClosingPolicy="UNAVAILABLE">
 

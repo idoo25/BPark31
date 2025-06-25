@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 public class ParkingOrder implements Serializable {
     private static final long serialVersionUID = 1L;
     
+    
     private int orderID;
     private String parkingCode;
     private String subscriberName;
