@@ -206,7 +206,19 @@ public class Message implements Serializable {
         /**
          * Cancellation response  
          */
-        CANCELLATION_RESPONSE
+        CANCELLATION_RESPONSE,
+        /**
+         * Kiosk login response  
+         */
+        KIOSK_LOGIN_RESPONSE,
+        /**
+         * Kiosk RF Login  
+         */
+        KIOSK_RF_LOGIN,
+        /**
+         * Kiosk ID Login  
+         */
+        KIOSK_ID_LOGIN
     }
 
     // Constructors ******************************************************

@@ -1297,4 +1297,76 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         
         return "Reservation not found or already cancelled/finished";
     }
+    
+    /**
+     * Checks whether a user with the given user ID exists in the database.
+     *
+     * @param userID The user ID to check for.
+     * @return  true if a user with the given ID exists; false otherwise.
+     */
+    public boolean doesUserIDExist(int userID) {
+        String qry = "SELECT COUNT(*) FROM users WHERE User_ID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setInt(1, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking user ID: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether a user with the given username exists in the database.
+     *
+     * @param username The username to check for.
+     * @return true if the username exists;  false otherwise.
+     */
+    public boolean doesUsernameExist(String username) {
+        String qry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking username: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    public String getNameByUsername(String username) {
+        String qry = "SELECT Name FROM users WHERE UserName = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Name");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting name by username: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public String getNameByUserID(int userID) {
+        String qry = "SELECT Name FROM users WHERE User_ID = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setInt(1, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Name");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting name by user ID: " + e.getMessage());
+        }
+        return null;
+    }
 }
