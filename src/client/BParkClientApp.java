@@ -65,11 +65,17 @@ public class BParkClientApp extends Application {
             Parent root = null;
             
             switch (userType) {
-                case "sub":
-                    FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
-                    root = subLoader.load();
-                    stage.setTitle("BPark - Subscriber Portal");
-                    break;
+            case "sub":
+                FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
+                root = subLoader.load();
+                SubscriberController controller = subLoader.getController();
+
+                // Set the user name in the bottom label
+                controller.setUserName(getCurrentUser());
+
+                stage.setTitle("BPark - Subscriber Portal");
+                break;
+                
                     
                 case "emp":
                     FXMLLoader empLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/AttendantMain.fxml"));

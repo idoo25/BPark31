@@ -39,6 +39,7 @@ public class SubscriberController implements Initializable {
     @FXML private TextField txtParkingCode;
     @FXML private TextField txtSubscriberCode;
     @FXML private Label lblAvailableSpots;
+    @FXML private Label lblUserInfo;
     
     // Reservation controls
     @FXML private DatePicker datePickerReservation;
@@ -64,6 +65,10 @@ public class SubscriberController implements Initializable {
     
     public static void setManualCheckRequested(boolean value) {
         manualCheckRequested = value;
+    }
+    
+    public void setUserName(String userName) {
+        lblUserInfo.setText("User: " + userName);
     }
     
     private ObservableList<ParkingOrder> parkingHistory = FXCollections.observableArrayList();
