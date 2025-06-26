@@ -253,12 +253,25 @@ public class ClientMessageHandler {
         showAlert("Available Spots", "Current available spots: " + data);
     }
     
-    private static void handleExtendParkingResponse(Message message) { //**
+    private static void handleExtendParkingResponse(Message message) {
         String response = (String) message.getContent();
+        
+        // show popup as before
         if (response.contains("extended")) {
             showAlert("Extension Successful", response);
+
+            // set green label
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage("Extension successful!", "green");
+            }
+
         } else {
             showAlert("Extension Failed", response);
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage(response, "red");
+            }
         }
     }
     

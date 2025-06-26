@@ -9,7 +9,7 @@ import entities.Message.MessageType;
 public class ExtendParkingController {
 	
 	
-
+	 public static ExtendParkingController instance;
 
 	
 
@@ -20,6 +20,7 @@ public class ExtendParkingController {
 
     @FXML
     public void initialize() {
+    	instance = this;
         hoursCombo.getItems().addAll("1", "2", "3", "4");
         hoursCombo.setValue("1");
     }
@@ -37,8 +38,14 @@ public class ExtendParkingController {
         String extensionData = code + "," + hours;
         Message msg = new Message(MessageType.REQUEST_EXTENSION, extensionData);
         BParkClientApp.sendMessage(msg);
-        //statusLabel.setText("Extension request sent.");
+        
+      
+        
     }
     
-    
+    public void setStatusMessage(String msg, String color) {
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + color + ";");
+    }
+  
 }
