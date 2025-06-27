@@ -5,9 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,6 +33,7 @@ import serverGUI.ServerPortFrame;
 public class ParkingServer extends AbstractServer {
     // Class variables *************************************************
     
+	
     /**
      * The default port to listen on.
      */
@@ -266,6 +269,21 @@ public class ParkingServer extends AbstractServer {
                 }
                 client.sendToClient(serialize(ret));
                 break;
+
+			case GET_SUBSCRIBER_BY_NAME:
+				String subscriberName = (String) message.getContent();
+				subscriber = parkingController.getSubscriberByName(subscriberName);
+				ret = new Message(MessageType.SHOW_SUBSCRIBER_DETAILS, subscriber);
+				client.sendToClient(serialize(ret));
+				break;
+
+			case GET_ALL_SUBSCRIBERS:
+			    List<ParkingSubscriber> allSubs = parkingController.getAllSubscribers();
+			    Message response = new Message(MessageType.SHOW_ALL_SUBSCRIBERS, (Serializable) allSubs);
+			    client.sendToClient(serialize(response)); // ← נכון
+			    break;
+
+
                
             case REQUEST_EXTENSION:
                 try {

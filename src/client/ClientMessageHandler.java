@@ -5,18 +5,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.List;
+
+
+import controllers.AttendantController;
+import controllers.ManagerController;
 
 import controllers.ExtendParkingController;
 import controllers.LoginController;
 import controllers.UpdateProfileController;
+
 import entities.Message;
 import entities.ParkingOrder;
 import entities.ParkingReport;
 import entities.ParkingSubscriber;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 
+
 public class ClientMessageHandler {
+
     
     /**
      * Handle Message objects received from server
@@ -74,6 +83,26 @@ public class ClientMessageHandler {
             case EXTENSION_RESPONSE:
             	handleExtendParkingResponse(message);
                 break;
+            case SHOW_SUBSCRIBER_DETAILS:
+			        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+              Platform.runLater(() -> {
+              if (BParkClientApp.getAttendantController() != null)
+                 BParkClientApp.getAttendantController().showSubscriberDetails(subscriber);
+              else if (BParkClientApp.getManagerController() != null)
+                 BParkClientApp.getManagerController().showSubscriberDetails(subscriber);
+                      });
+			          break;
+
+		          case SHOW_ALL_SUBSCRIBERS:
+			          List<ParkingSubscriber> subs = (List<ParkingSubscriber>) message.getContent();
+
+			          if (BParkClientApp.getAttendantController() != null)
+				          BParkClientApp.getAttendantController().updateSubscriberTable(subs);
+
+			          if (BParkClientApp.getManagerController() != null)
+				          BParkClientApp.getManagerController().updateSubscriberTable(subs);
+			          break;
+
                 
         
             default:
@@ -204,6 +233,16 @@ public class ClientMessageHandler {
         ArrayList<ParkingOrder> activeParkings = (ArrayList<ParkingOrder>) message.getContent();
         // Update the active parkings table in attendant/manager view
         System.out.println("Received " + activeParkings.size() + " active parking sessions");
+        
+        AttendantController controller = BParkClientApp.getAttendantController();
+		    if (controller != null) {
+			      controller.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+		    }
+
+		    ManagerController managerController = BParkClientApp.getManagerController();
+		    if (managerController != null) {
+			    managerController.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+		    }
     }
     
     private static void handleUpdateResponse(Message message) {

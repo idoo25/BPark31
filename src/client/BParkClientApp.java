@@ -1,21 +1,27 @@
 package client;
 
+import controllers.AttendantController;
+import controllers.ManagerController;
+import entities.Message;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.stage.Stage;
-import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import entities.Message;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import ocsf.client.ObservableClient;
-import controllers.*;
-import java.io.IOException;
+
+
 
 public class BParkClientApp extends Application {
+
     private static BParkClient client;
     private static String serverIP = "localhost";
     private static int serverPort = 5555;
     
+  	private static AttendantController attendantController;
+	  private static ManagerController managerController;
+	
     // Current user info
     private static String currentUser;
     private static String userType; // "sub", "emp", "mng"
@@ -210,4 +216,20 @@ public class BParkClientApp extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+  	
+	public static void setAttendantController(AttendantController controller) {
+		attendantController = controller;
+	}
+
+	public static AttendantController getAttendantController() {
+		return attendantController;
+	}
+
+	public static void setManagerController(controllers.ManagerController controller) {
+		managerController = controller;
+	}
+
+	public static controllers.ManagerController getManagerController() {
+		return managerController;
+	}
 }
