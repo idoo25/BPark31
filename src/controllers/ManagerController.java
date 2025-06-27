@@ -229,7 +229,7 @@ public class ManagerController implements Initializable {
 
 	private void loadInitialData() {
 		// Load parking availability
-		checkParkingStatus();
+		//checkParkingStatus();
 
 		// Load initial reports
 		loadReports("ALL");
@@ -241,7 +241,7 @@ public class ManagerController implements Initializable {
 	private void startAutoRefresh() {
 		// Refresh dashboard every 30 seconds
 		refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
-			checkParkingStatus();
+			//checkParkingStatus();
 			updateLastRefreshTime();
 		}));
 		refreshTimeline.setCycleCount(Timeline.INDEFINITE);

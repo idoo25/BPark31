@@ -87,9 +87,11 @@ public class BParkClientApp extends Application {
                 
                     
                 case "emp":
-                    FXMLLoader empLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/AttendantMain.fxml"));
-                    root = empLoader.load();
-                    stage.setTitle("BPark - Attendant Portal");
+                	FXMLLoader empLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/AttendantMain.fxml"));
+                	root = empLoader.load();
+                	AttendantController attendantController = empLoader.getController(); 
+                	attendantController.setUserName(getCurrentUser());
+                	stage.setTitle("BPark - Attendant Portal");
                     break;
                     
                 case "mng":

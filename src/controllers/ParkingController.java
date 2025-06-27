@@ -1415,7 +1415,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
                     if (rs.next()) {
                         String isExtended = rs.getString("IsExtended");
 
-                        // ❌ Block if already extended once
+                        //  Block if already extended once
                         if ("yes".equalsIgnoreCase(isExtended)) {
                             return "Cannot extend again: You already extended this active parking session.";
                         }

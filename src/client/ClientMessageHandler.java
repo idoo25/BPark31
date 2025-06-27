@@ -293,7 +293,7 @@ public class ClientMessageHandler {
         String response = (String) message.getContent();
         
         // show popup as before
-        if (response.contains("extended")) {
+        if (response.contains("Parking time extended")) {
             showAlert("Extension Successful", response);
 
             // set green label

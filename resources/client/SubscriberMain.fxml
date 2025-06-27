@@ -62,7 +62,7 @@
                  onAction="#showExitParkingView" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Make Reservation" 
+         <Button text="Reservation" 
                  onAction="#showReservationView" 
                  prefWidth="180" styleClass="menu-button" />
          
@@ -70,9 +70,6 @@
                  onAction="#handleActivateReservation" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Cancel Reservation" 
-                 onAction="#handleCancelReservation" 
-                 prefWidth="180" styleClass="menu-button" />
          
          <Separator />
          
