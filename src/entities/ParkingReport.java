@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 public class ParkingReport implements Serializable {
     private static final long serialVersionUID = 1L;
     
+    
     private String reportType; // "PARKING_TIME", "SUBSCRIBER_STATUS"
     private LocalDate reportDate;
     

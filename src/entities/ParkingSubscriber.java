@@ -117,4 +117,5 @@ public class ParkingSubscriber implements Serializable {
                 ", userType='" + userType + '\'' +
                 '}';
     }
+    
 }

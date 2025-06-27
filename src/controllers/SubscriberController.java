@@ -1,12 +1,16 @@
 package controllers;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.GridPane;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,10 +34,12 @@ public class SubscriberController implements Initializable {
     @FXML private Button btnUpdateProfile;
     @FXML private Button btnLogout;
     
+    
     // Parking entry/exit controls
     @FXML private TextField txtParkingCode;
     @FXML private TextField txtSubscriberCode;
     @FXML private Label lblAvailableSpots;
+    @FXML private Label lblUserInfo;
     
     // Reservation controls
     @FXML private DatePicker datePickerReservation;
@@ -55,12 +61,22 @@ public class SubscriberController implements Initializable {
     // Current view container
     @FXML private VBox mainContent;
     
+    private static boolean manualCheckRequested = false;
+    
+    public static void setManualCheckRequested(boolean value) {
+        manualCheckRequested = value;
+    }
+    
+    public void setUserName(String userName) {
+        lblUserInfo.setText("User: " + userName);
+    }
+    
     private ObservableList<ParkingOrder> parkingHistory = FXCollections.observableArrayList();
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupUI();
-        loadInitialData();
+       
     }
     
     private void setupUI() {
@@ -94,12 +110,16 @@ public class SubscriberController implements Initializable {
         }
     }
     
-    private void loadInitialData() {
-        // Check parking availability on startup
-        checkParkingAvailability();
-    }
+
     
     // ===== Action Handlers =====
+    
+    @FXML
+    private void handleShowAvailableSpots() {
+    	setManualCheckRequested(true);
+        Message checkMsg = new Message(Message.MessageType.CHECK_PARKING_AVAILABILITY, null);
+        BParkClientApp.sendMessage(checkMsg);
+    }
     
     @FXML
     private void checkParkingAvailability() {
@@ -193,59 +213,18 @@ public class SubscriberController implements Initializable {
     }
     
     @FXML
-    private void handleExtendParking() {
-        Dialog<String[]> dialog = new Dialog<>();
-        dialog.setTitle("Extend Parking Time");
-        dialog.setHeaderText("Enter parking code and extension hours:");
-        
-        // Create custom dialog content
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        
-        TextField codeField = new TextField();
-        ComboBox<String> hoursCombo = new ComboBox<>();
-        hoursCombo.getItems().addAll("1", "2", "3", "4");
-        hoursCombo.setValue("1");
-        
-        grid.add(new Label("Parking Code:"), 0, 0);
-        grid.add(codeField, 1, 0);
-        grid.add(new Label("Extension Hours:"), 0, 1);
-        grid.add(hoursCombo, 1, 1);
-        
-        dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                return new String[]{codeField.getText(), hoursCombo.getValue()};
-            }
-            return null;
-        });
-        
-        dialog.showAndWait().ifPresent(result -> {
-            if (result[0] != null && !result[0].trim().isEmpty()) {
-                String extensionData = result[0] + "," + result[1];
-                Message msg = new Message(MessageType.EXTEND_PARKING, extensionData);
-                BParkClientApp.sendMessage(msg);
-            }
-        });
+    private void handleExtendParking() { //***
+    	   try {
+    	        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ExtendParkingView.fxml"));
+    	        Node extendParkingView = loader.load();
+    	        mainContent.getChildren().setAll(extendParkingView); 
+    	    } catch (IOException e) {
+    	        e.printStackTrace();
+    	    }
     }
-    
-    @FXML
-    private void handleUpdateProfile() {
-        String phone = txtPhone.getText().trim();
-        String email = txtEmail.getText().trim();
-        
-        if (phone.isEmpty() || email.isEmpty()) {
-            showAlert("Error", "Please fill in all fields");
-            return;
-        }
-        
-        String updateData = BParkClientApp.getCurrentUser() + "," + phone + "," + email;
-        Message msg = new Message(MessageType.UPDATE_SUBSCRIBER_INFO, updateData);
-        BParkClientApp.sendMessage(msg);
-    }
+   
+
+
     
     @FXML
     private void handleLogout() {
@@ -276,10 +255,18 @@ public class SubscriberController implements Initializable {
     
     @FXML
     private void showProfileView() {
-        // Show profile update section
-        showAlert("Update Profile", "Update your phone and email information");
+    	  try {
+    		// Load the FXML file for the profile update screen
+              FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/UpdateProfileView.fxml"));
+           // Load the actual UI components from the FXML file into a Node object
+              Node profileView = loader.load();
+              mainContent.getChildren().setAll(profileView);  // This replaces the center of the UI
+          } catch (IOException e) {
+              e.printStackTrace();
+          }
     }
     
+   
     // ===== UI Update Methods =====
     
     public void updateAvailableSpots(int spots) {

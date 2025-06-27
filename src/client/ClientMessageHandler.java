@@ -5,15 +5,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
+import controllers.AttendantController;
+import controllers.ExtendParkingController;
+import controllers.LoginController;
+import controllers.ManagerController;
+import controllers.UpdateProfileController;
 import entities.Message;
 import entities.ParkingOrder;
 import entities.ParkingReport;
 import entities.ParkingSubscriber;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 
+
 public class ClientMessageHandler {
+
     
     /**
      * Handle Message objects received from server
@@ -56,6 +65,10 @@ public class ClientMessageHandler {
                 handleUpdateResponse(message);
                 break;
                 
+            case SUBSCRIBER_DATA_RESPONSE:
+                handleSubscriberDataResponse(message);
+                break;
+                
             case ACTIVATION_RESPONSE:
                 handleActivationResponse(message);
                 break;
@@ -63,7 +76,32 @@ public class ClientMessageHandler {
             case CANCELLATION_RESPONSE:
                 handleCancellationResponse(message);
                 break;
+             
+            case EXTENSION_RESPONSE:
+            	handleExtendParkingResponse(message);
+                break;
+            case SHOW_SUBSCRIBER_DETAILS:
+			        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+              Platform.runLater(() -> {
+              if (BParkClientApp.getAttendantController() != null)
+                 BParkClientApp.getAttendantController().showSubscriberDetails(subscriber);
+              else if (BParkClientApp.getManagerController() != null)
+                 BParkClientApp.getManagerController().showSubscriberDetails(subscriber);
+                      });
+			          break;
+
+		          case SHOW_ALL_SUBSCRIBERS:
+			          List<ParkingSubscriber> subs = (List<ParkingSubscriber>) message.getContent();
+
+			          if (BParkClientApp.getAttendantController() != null)
+				          BParkClientApp.getAttendantController().updateSubscriberTable(subs);
+
+			          if (BParkClientApp.getManagerController() != null)
+				          BParkClientApp.getManagerController().updateSubscriberTable(subs);
+			          break;
+
                 
+        
             default:
                 System.out.println("Unknown message type: " + message.getType());
         }
@@ -110,13 +148,28 @@ public class ClientMessageHandler {
     // Message Type Handlers
     
     private static void handleLoginResponse(Message message) {
-        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+       ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+        
         if (subscriber != null) {
             BParkClientApp.setCurrentUser(subscriber.getSubscriberCode());
             BParkClientApp.setUserType(subscriber.getUserType());
             BParkClientApp.switchToMainScreen(subscriber.getUserType());
+            
+            Platform.runLater(() -> 
+            LoginController.getInstance().handleLoginSuccess(subscriber.getUserType())
+            );
         } else {
-            showAlert("Login Failed", "Invalid username or user not found");
+        	// Show alert
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Login Failed");
+                alert.setHeaderText(null);
+                alert.setContentText("Invalid username/userCode or user not found.");
+                alert.showAndWait();
+
+                // Reset fields so the user can try again
+                LoginController.getInstance().handleLoginFailed(null);
+            });
         }
     }
     
@@ -177,11 +230,34 @@ public class ClientMessageHandler {
         ArrayList<ParkingOrder> activeParkings = (ArrayList<ParkingOrder>) message.getContent();
         // Update the active parkings table in attendant/manager view
         System.out.println("Received " + activeParkings.size() + " active parking sessions");
+        
+        AttendantController controller = BParkClientApp.getAttendantController();
+		    if (controller != null) {
+			      controller.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+		    }
+
+		    ManagerController managerController = BParkClientApp.getManagerController();
+		    if (managerController != null) {
+			    managerController.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+		    }
     }
     
     private static void handleUpdateResponse(Message message) {
         String response = (String) message.getContent();
         showAlert("Update Profile", response);
+    }
+    
+    private static void handleSubscriberDataResponse(Message message) {
+        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+
+        Platform.runLater(() -> {
+            UpdateProfileController controller = BParkClientApp.getUpdateProfileController();
+            controller.setFieldPrompts(
+                subscriber.getEmail(),
+                subscriber.getPhoneNumber(),
+                subscriber.getCarNumber()
+            );
+        });
     }
     
     private static void handleActivationResponse(Message message) {
@@ -211,6 +287,28 @@ public class ClientMessageHandler {
     
     private static void handleStringAvailableSpots(String data) {
         showAlert("Available Spots", "Current available spots: " + data);
+    }
+    
+    private static void handleExtendParkingResponse(Message message) {
+        String response = (String) message.getContent();
+        
+        // show popup as before
+        if (response.contains("extended")) {
+            showAlert("Extension Successful", response);
+
+            // set green label
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage("Extension successful!", "green");
+            }
+
+        } else {
+            showAlert("Extension Failed", response);
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage(response, "red");
+            }
+        }
     }
     
     // Utility methods
