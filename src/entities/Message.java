@@ -210,21 +210,18 @@ public class Message implements Serializable {
 		CANCELLATION_RESPONSE,
 
 		GET_SUBSCRIBER_BY_NAME,
-		
+
 		GET_ALL_SUBSCRIBERS,
-		
+
 		SHOW_ALL_SUBSCRIBERS,
-		
+
 		SHOW_SUBSCRIBER_DETAILS,
 
-    CANCELLATION_RESPONSE,
-        
-    REQUEST_SUBSCRIBER_DATA,
-        
-    SUBSCRIBER_DATA_RESPONSE, 
-		
-	}
+		REQUEST_SUBSCRIBER_DATA,
 
+		SUBSCRIBER_DATA_RESPONSE,
+
+	}
 
 	// Constructors ******************************************************
 	/**

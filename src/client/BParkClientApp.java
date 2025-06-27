@@ -1,7 +1,10 @@
 package client;
 
 import controllers.AttendantController;
+import controllers.ExtendParkingController;
 import controllers.ManagerController;
+import controllers.SubscriberController;
+import controllers.UpdateProfileController;
 import entities.Message;
 import javafx.application.Application;
 import javafx.application.Platform;
