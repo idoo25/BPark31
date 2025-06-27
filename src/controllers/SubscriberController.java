@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.GridPane;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
@@ -69,6 +70,8 @@ public class SubscriberController implements Initializable {
     
     private static boolean manualCheckRequested = false;
     
+    
+    
     public static void setManualCheckRequested(boolean value) {
         manualCheckRequested = value;
     }
@@ -81,7 +84,10 @@ public class SubscriberController implements Initializable {
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        setupUI();
+    	 setupUI();
+    	
+       
+        
        
     }
     
@@ -116,9 +122,27 @@ public class SubscriberController implements Initializable {
         }
     }
     
+    public void loadHomeView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/HomeView.fxml"));
+            Parent homeView = loader.load();
+            mainContent.getChildren().clear();
+            mainContent.getChildren().add(homeView);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+
+    
 
     
     // ===== Action Handlers =====
+    
+    @FXML
+    private void handleGoHome() {
+        loadHomeView();
+    }
     
     @FXML
     private void handleShowAvailableSpots() {
@@ -286,7 +310,7 @@ public class SubscriberController implements Initializable {
             mainContent.getChildren().clear();
             mainContent.getChildren().add(reservationView);
 
-            setupReservationForm(); // sets up allowed dates and time slots
+            setupUI();
         } catch (IOException e) {
             e.printStackTrace();
         }

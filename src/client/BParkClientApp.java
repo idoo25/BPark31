@@ -75,9 +75,12 @@ public class BParkClientApp extends Application {
             
             switch (userType) {
             case "sub":
-                FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
-                root = subLoader.load();
-                SubscriberController controller = subLoader.getController();
+            	FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
+            	root = subLoader.load();
+            	SubscriberController controller = subLoader.getController();
+
+            	// ✅ Move loadHomeView AFTER controller is fully loaded
+            	Platform.runLater(controller::loadHomeView);
 
                 // Set the user name in the bottom label
                 controller.setUserName(getCurrentUser());
