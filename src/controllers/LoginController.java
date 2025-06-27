@@ -16,24 +16,49 @@ import entities.Message.MessageType;
 public class LoginController implements Initializable {
     
     @FXML private TextField txtUsername;
-    @FXML private PasswordField txtPassword;
+    @FXML private TextField txtUsercode;
     @FXML private TextField txtServerIP;
     @FXML private Button btnLogin;
     @FXML private Label lblStatus;
     
     private boolean isConnecting = false;
+    private static LoginController instance;
     
+    public LoginController() {
+        instance = this;
+    }
+    
+	public static LoginController getInstance() {
+		return instance;
+	}
+	
+	/**
+	 * Initializes the login screen: connects to the server, sets default values, and configures user input behavior.
+	 */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Set default server IP
-        txtServerIP.setText("localhost");
+    	 // If the client is a user - connect to the server
+	   	 if (BParkClientApp.getClient() == null || !BParkClientApp.isConnected()) {
+		        System.out.println("Connecting to server...");
+		        BParkClientApp.connectToServer();
+		 }
+	   	 // Set default server IP
+	   	 txtServerIP.setText("localhost");
+	 
+	   	 // Enable Enter key to login
+	   	 txtUsername.setOnKeyPressed(this::handleEnterKey);
+	   	 txtUsercode.setOnKeyPressed(this::handleEnterKey);
+	 
+	   	 // Focus on username field
+	   	 Platform.runLater(() -> txtUsername.requestFocus());
+    }
+    
+    @FXML
+    private void handleCheckAvailability() {
+        // Send a request to the server 
+        Message checkMsg = new Message(Message.MessageType.CHECK_PARKING_AVAILABILITY, null);
+        BParkClientApp.sendMessage(checkMsg);
         
-        // Enable Enter key to login
-        txtUsername.setOnKeyPressed(this::handleEnterKey);
-        txtPassword.setOnKeyPressed(this::handleEnterKey);
-        
-        // Focus on username field
-        Platform.runLater(() -> txtUsername.requestFocus());
     }
     
     @FXML
@@ -43,12 +68,19 @@ public class LoginController implements Initializable {
         }
         
         String username = txtUsername.getText().trim();
+        String usercode = txtUsercode.getText().trim();
         String serverIP = txtServerIP.getText().trim();
         
         // Validate input
         if (username.isEmpty()) {
             showError("Please enter your username");
             txtUsername.requestFocus();
+            return;
+        }
+        
+        if (usercode.isEmpty()) {
+            showError("Please enter your userCode");
+            txtUsercode.requestFocus();
             return;
         }
         
@@ -81,7 +113,7 @@ public class LoginController implements Initializable {
                     BParkClientApp.setCurrentUser(username);
                     
                     // Send login message
-                    Message loginMsg = new Message(MessageType.SUBSCRIBER_LOGIN, username);
+                    Message loginMsg = new Message(MessageType.SUBSCRIBER_LOGIN, username + "," + usercode);
                     BParkClientApp.sendMessage(loginMsg);
                     
                     lblStatus.setText("Authenticating...");
@@ -146,4 +178,6 @@ public class LoginController implements Initializable {
         lblStatus.setText(message);
         lblStatus.setStyle("-fx-text-fill: #E74C3C;");
     }
+
+   
 }

@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import entities.ParkingOrder;
@@ -20,10 +21,37 @@ import services.EmailService;
  * Updated to work with unified parkinginfo table structure
  */
 public class ParkingController {
+	private int subscriberID;
+    private String firstName;
+    private String phoneNumber;
+    private String email;
+    private String carNumber;
+    private String subscriberCode;
+    private String userType;
     protected Connection conn;
     public int successFlag;
     private static final int TOTAL_PARKING_SPOTS = 100;
     private static final double RESERVATION_THRESHOLD = 0.4;
+    
+    
+    // Getters
+    public int getSubscriberID() { return subscriberID; }
+    public String getFirstName() { return firstName; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public String getEmail() { return email; }
+    public String getCarNumber() { return carNumber; }
+    public String getSubscriberCode() { return subscriberCode; }
+    public String getUserType() { return userType; }
+
+    // Setters
+    public void setSubscriberID(int subscriberID) { this.subscriberID = subscriberID; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setEmail(String email) { this.email = email; }
+    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
+    public void setSubscriberCode(String subscriberCode) { this.subscriberCode = subscriberCode; }
+    public void setUserType(String userType) { this.userType = userType; }
+
     
     /**
      * Role-based access control for all parking operations
@@ -165,11 +193,12 @@ public class ParkingController {
 
     // ========== ALL YOUR EXISTING METHODS UPDATED ==========
     
-    public String checkLogin(String userName, String password) {
-        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
+    public String checkLogin(String userName, String userCode) {
+        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ? AND User_ID = ?";
         
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, userName);
+            stmt.setString(2, userCode);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getString("UserTypeEnum");
@@ -208,23 +237,6 @@ public class ParkingController {
         return null;
     }
 
-    /**
-     * Gets the number of available parking spots
-     */
-//    public int getAvailableParkingSpots() {
-//        String qry = "SELECT COUNT(*) as available FROM ParkingSpot WHERE isOccupied = false";
-//        
-//        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-//            try (ResultSet rs = stmt.executeQuery()) {
-//                if (rs.next()) {
-//                    return rs.getInt("available");
-//                }
-//            }
-//        } catch (SQLException e) {
-//            System.out.println("Error getting available spots: " + e.getMessage());
-//        }
-//        return 0;
-//    }
 
     /**
      * Checks if reservation is possible (40% of spots must be available)
@@ -742,60 +754,95 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
      */
     public String extendParkingTime(String parkingCodeStr, int additionalHours) {
         if (additionalHours < 1 || additionalHours > 4) {
-            return "Can only extend parking by 1-4 hours";
+            return "Can only extend parking by 1–4 hours.";
         }
-        
+
         try {
             int parkingCode = Integer.parseInt(parkingCodeStr);
-            
-            // Get user info for email notification
+
+            // Get current parking info and user data
             String getUserQry = """
                 SELECT pi.*, u.Email, u.Name 
                 FROM parkinginfo pi 
                 JOIN users u ON pi.User_ID = u.User_ID 
                 WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
-                """;
-            
+            """;
+
             try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
                 stmt.setInt(1, parkingCode);
+
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
+                        String isExtended = rs.getString("IsExtended");
+
+                        // ❌ Block if already extended once
+                        if ("yes".equalsIgnoreCase(isExtended)) {
+                            return "Cannot extend again: You already extended this active parking session.";
+                        }
+
                         Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
                         String userEmail = rs.getString("Email");
                         String userName = rs.getString("Name");
-                        
+                        int parkingSpotId = rs.getInt("ParkingSpot_ID");
+
                         LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime().plusHours(additionalHours);
-                        
+
+                        // Check for conflicting reservation
+                        String conflictCheckQry = """
+                            SELECT 1 FROM parkinginfo
+                            WHERE ParkingSpot_ID = ?
+                              AND statusEnum = 'preorder'
+                              AND Estimated_start_time > ?
+                              AND Estimated_start_time < ?
+                        """;
+
+                        try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
+                            checkStmt.setInt(1, parkingSpotId);
+                            checkStmt.setTimestamp(2, currentEstimatedEnd);
+                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
+
+                            try (ResultSet conflictRs = checkStmt.executeQuery()) {
+                                if (conflictRs.next()) {
+                                    return "Cannot extend parking: A reservation is scheduled during the extension period.";
+                                }
+                            }
+                        }
+
+                        // ✅ Update estimated end time and mark as extended
                         String updateQry = """
                             UPDATE parkinginfo 
                             SET Estimated_end_time = ?, IsExtended = 'yes' 
                             WHERE ParkingInfo_ID = ?
-                            """;
-                        
+                        """;
+
                         try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
                             updateStmt.setTimestamp(1, Timestamp.valueOf(newEstimatedEnd));
                             updateStmt.setInt(2, parkingCode);
                             updateStmt.executeUpdate();
-                            
-                            // SEND EMAIL NOTIFICATION
-                            if (userEmail != null && userName != null) {
-                                EmailService.sendExtensionConfirmation(
-                                    userEmail, userName, parkingCodeStr, 
-                                    additionalHours, newEstimatedEnd.toString()
-                                );
+
+                            try {
+                                if (userEmail != null && userName != null) {
+                                    EmailService.sendExtensionConfirmation(
+                                        userEmail, userName, parkingCodeStr,
+                                        additionalHours, newEstimatedEnd.toString()
+                                    );
+                                }
+                            } catch (Exception e) {
+                                System.out.println("Email sending failed: " + e.getMessage());
                             }
-                            
+
                             return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
                         }
                     }
                 }
             }
         } catch (NumberFormatException e) {
-            return "Invalid parking code format";
+            return "Invalid parking code format.";
         } catch (SQLException e) {
             System.out.println("Error extending parking time: " + e.getMessage());
         }
-        return "Invalid parking code or parking session not active";
+
+        return "Invalid parking code or parking session not active.";
     }
 
     /**
@@ -932,22 +979,50 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
      */
     public String updateSubscriberInfo(String updateData) {
         // Format: userName,phone,email
-        String[] data = updateData.split(",");
-        if (data.length != 3) {
+        String[] data = updateData.split(",", -1); // -1 keeps empty values
+        if (data.length != 4) {
             return "Invalid update data format";
         }
-        
+
         String userName = data[0];
         String phone = data[1];
         String email = data[2];
+        String carNumber = data[3];
+
+        // Build the update query dynamically
+        StringBuilder queryBuilder = new StringBuilder("UPDATE users SET ");
+        List<String> fields = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+
+        if (!phone.isEmpty()) {
+            fields.add("Phone = ?");
+            values.add(phone);
+        }
+
+        if (!email.isEmpty()) {
+            fields.add("Email = ?");
+            values.add(email);
+        }
         
-        String qry = "UPDATE users SET Phone = ?, Email = ? WHERE UserName = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, phone);
-            stmt.setString(2, email);
-            stmt.setString(3, userName);
-            
+        if (!carNumber.isEmpty()) {
+            fields.add("CarNum = ?");
+            values.add(carNumber);
+        }
+
+        if (fields.isEmpty()) {
+            return "No changes to update.";
+        }
+
+        queryBuilder.append(String.join(", ", fields));
+        queryBuilder.append(" WHERE UserName = ?");
+
+        try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+            // Set the values for updated fields
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setString(i + 1, values.get(i));
+            }
+            stmt.setString(values.size() + 1, userName); // Set username as the last parameter
+
             int rowsUpdated = stmt.executeUpdate();
             if (rowsUpdated > 0) {
                 return "Subscriber information updated successfully";
@@ -955,6 +1030,7 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         } catch (SQLException e) {
             System.out.println("Error updating subscriber info: " + e.getMessage());
         }
+
         return "Failed to update subscriber information";
     }
 

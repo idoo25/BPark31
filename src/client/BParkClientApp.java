@@ -26,6 +26,14 @@ public class BParkClientApp extends Application {
         showLoginScreen(primaryStage);
     }
     
+    public static UpdateProfileController getUpdateProfileController() {
+        return UpdateProfileController.instance;
+    }
+    
+    public static ExtendParkingController getExtendParkingController() {
+        return ExtendParkingController.instance;
+    }
+    
     private void showLoginScreen(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/Login.fxml"));
         Parent root = loader.load();
@@ -47,17 +55,27 @@ public class BParkClientApp extends Application {
         }
     }
     
+    public static boolean isConnected() {
+        return client != null && client.isConnected();
+    }
+    
     public static void switchToMainScreen(String userType) {
         try {
             Stage stage = new Stage();
             Parent root = null;
             
             switch (userType) {
-                case "sub":
-                    FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
-                    root = subLoader.load();
-                    stage.setTitle("BPark - Subscriber Portal");
-                    break;
+            case "sub":
+                FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
+                root = subLoader.load();
+                SubscriberController controller = subLoader.getController();
+
+                // Set the user name in the bottom label
+                controller.setUserName(getCurrentUser());
+
+                stage.setTitle("BPark - Subscriber Portal");
+                break;
+                
                     
                 case "emp":
                     FXMLLoader empLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/AttendantMain.fxml"));
@@ -147,6 +165,10 @@ public class BParkClientApp extends Application {
     }
     
     // Getters and setters
+    
+    public static BParkClient getClient() {
+        return client;
+    } 
     public static String getCurrentUser() {
         return currentUser;
     }

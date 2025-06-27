@@ -25,11 +25,7 @@
             
             <Region HBox.hgrow="ALWAYS" />
             
-            <Label fx:id="lblAvailableSpots" text="Available Spots: --" textFill="WHITE">
-               <font>
-                  <Font size="16.0" />
-               </font>
-            </Label>
+            
             
             <Button fx:id="btnCheckAvailability" text="Refresh" onAction="#checkParkingAvailability" />
             <Button fx:id="btnLogout" text="Logout" onAction="#handleLogout" styleClass="logout-button" />
@@ -44,13 +40,19 @@
             <Insets bottom="20.0" left="10.0" right="10.0" top="20.0" />
          </padding>
          
-         <Label text="Quick Actions" textFill="WHITE">
+         <Label text="BPark Menu" textFill="WHITE">
             <font>
                <Font size="16.0" />
             </font>
          </Label>
          
-         <Separator />
+         <Separator /> 
+         
+          <Button fx:id="btnShowAvailableSpots"
+        		 text="Show Available Spots"
+        		 onAction="#handleShowAvailableSpots"
+       			 layoutX="20" layoutY="100"
+        		 prefWidth="200" />
          
          <Button fx:id="btnEnterParking" text="Enter Parking Now" 
                  onAction="#handleImmediateParking" 
@@ -82,13 +84,16 @@
                  onAction="#handleLostCode" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Extend Parking" 
-                 onAction="#handleExtendParking" 
-                 prefWidth="180" styleClass="menu-button" />
+         <Button  text="Extend Parking" 
+        	     onAction="#handleExtendParking"
+        		 prefWidth="180" styleClass="menu-button" />
+        		
          
          <Button fx:id="btnUpdateProfile" text="Update Profile" 
                  onAction="#showProfileView" 
                  prefWidth="180" styleClass="menu-button" />
+                 
+                 
       </VBox>
    </left>
    
