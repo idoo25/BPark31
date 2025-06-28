@@ -8,7 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import entities.Message;
 import ocsf.client.ObservableClient;
-
+import controllers.KioskController;
 
 public class BParkKioskApp extends Application {
 
@@ -25,6 +25,9 @@ public class BParkKioskApp extends Application {
     private void showKioskScreen(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/KioskMain.fxml"));
         Parent root = loader.load();
+
+        // Set main stage in the controller to allow screen switching
+        KioskController.setMainStage(stage);
 
         Scene scene = new Scene(root);
         scene.getStylesheets().add(getClass().getResource("/css/BParkStyle.css").toExternalForm());
@@ -52,7 +55,7 @@ public class BParkKioskApp extends Application {
         protected void handleMessageFromServer(Object msg) {
             Platform.runLater(() -> {
                 try {
-                	Object message = msg;
+                    Object message = msg;
                     if (message instanceof byte[]) {
                         message = ClientMessageHandler.deserialize(msg);
                     }

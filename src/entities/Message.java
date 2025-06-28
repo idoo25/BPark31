@@ -218,7 +218,31 @@ public class Message implements Serializable {
         /**
          * Kiosk ID Login  
          */
-        KIOSK_ID_LOGIN
+        KIOSK_ID_LOGIN,
+        /**
+         * Kiosk enter parking request
+         */
+        ENTER_PARKING_KIOSK,
+        /**
+         * Kiosk enter parking response
+         */
+        ENTER_PARKING_KIOSK_RESPONSE,
+        /**
+         * Kiosk retrieve car request
+         */
+        RETRIEVE_CAR_KIOSK,
+        /**
+         * Kiosk retrieve car response
+         */
+        RETRIEVE_CAR_KIOSK_RESPONSE,
+        /**
+         * Kiosk forgot code request
+         */
+        FORGOT_CODE_KIOSK,
+        /**
+         * Kiosk forgot code response
+         */
+        FORGOT_CODE_KIOSK_RESPONSE
     }
 
     // Constructors ******************************************************

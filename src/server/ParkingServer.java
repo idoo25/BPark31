@@ -100,26 +100,85 @@ public class ParkingServer extends AbstractServer {
 
     private synchronized void handleMessageObject(Message message, ConnectionToClient client) throws IOException {
         Message ret;
-        switch (message.getType()) {
-		case KIOSK_ID_LOGIN:
-		    String username = (String) message.getContent();
-		    String name = parkingController.getNameByUsername(username);
-		    ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, name != null ? name : "");
-		    client.sendToClient(serialize(ret));
-		    break;
 
-		case KIOSK_RF_LOGIN:
-		    int userID = (Integer) message.getContent();
-		    String nameByID = parkingController.getNameByUserID(userID);
-		    ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, nameByID != null ? nameByID : "");
-		    break;
+        try {
+            switch (message.getType()) {
 
-		    default:
-		        System.out.println("Unknown message type: " + message.getType());
-		        break;
-		}
+                case KIOSK_ID_LOGIN:
+                    String combined = (String) message.getContent();
+                    String[] parts = combined.split(",");
+                    if (parts.length != 2) {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+                        client.sendToClient(serialize(ret));
+                        return;
+                    }
+
+                    String username = parts[0].trim();
+                    int userID;
+                    try {
+                        userID = Integer.parseInt(parts[1].trim());
+                    } catch (NumberFormatException e) {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+                        client.sendToClient(serialize(ret));
+                        return;
+                    }
+
+                    String name = parkingController.getNameByUsernameAndUserID(username, userID);
+                    if (name != null) {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, name + "," + userID);
+                    } else {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+                    }
+                    client.sendToClient(serialize(ret));
+                    break;
+
+                case KIOSK_RF_LOGIN:
+                    int rfUserID = (Integer) message.getContent();
+                    String nameByID = parkingController.getNameByUserID(rfUserID);
+                    if (nameByID != null) {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, nameByID + "," + rfUserID);
+                    } else {
+                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+                    }
+                    client.sendToClient(serialize(ret));
+                    break;
+
+                case ENTER_PARKING_KIOSK:
+                    int enteringUserID = (Integer) message.getContent();
+                    if (parkingController.isParkingFull()) {
+                        ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, "FULL");
+                    } else {
+                        String entryResult = parkingController.enterParking(enteringUserID);
+                        ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, entryResult);
+                    }
+                    client.sendToClient(serialize(ret));
+                    break;
+
+                case RETRIEVE_CAR_KIOSK:
+                    int parkingCode = (Integer) message.getContent();
+                    String retrievalResult = parkingController.retrieveCarByCode(parkingCode);
+                    ret = new Message(MessageType.RETRIEVE_CAR_KIOSK_RESPONSE, retrievalResult);
+                    client.sendToClient(serialize(ret));
+                    break;
+
+                case FORGOT_CODE_KIOSK:
+                    int forgotUserID = (Integer) message.getContent();
+                    String code = parkingController.sendLostParkingCode(forgotUserID);
+                    ret = new Message(MessageType.FORGOT_CODE_KIOSK_RESPONSE, code);
+                    client.sendToClient(serialize(ret));
+                    break;
+
+                default:
+                    System.out.println("Unknown message type: " + message.getType());
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "Server error");
+            client.sendToClient(serialize(ret));
+        }
     }
-
+    
     private synchronized void handleStringMessage(String message, ConnectionToClient client) {
         String[] arr = message.split("\\s");
 

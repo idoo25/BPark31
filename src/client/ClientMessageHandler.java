@@ -23,6 +23,18 @@ public class ClientMessageHandler {
                 handleKioskLoginResponse(message);
                 break;
 
+            case ENTER_PARKING_KIOSK_RESPONSE:
+                handleEnterParkingKioskResponse(message);
+                break;
+
+            case RETRIEVE_CAR_KIOSK_RESPONSE:
+                handleRetrieveCarKioskResponse(message);
+                break;
+
+            case FORGOT_CODE_KIOSK_RESPONSE:
+                handleForgotCodeKioskResponse(message);
+                break;
+
             case PARKING_AVAILABILITY_RESPONSE:
                 handleParkingAvailability(message);
                 break;
@@ -126,7 +138,22 @@ public class ClientMessageHandler {
     private static void handleKioskLoginResponse(Message message) {
         KioskController.handleKioskLoginResult(message.getContent());
     }
-    
+
+    private static void handleEnterParkingKioskResponse(Message message) {
+        String response = (String) message.getContent();
+        showAlert("Enter Parking", response);
+    }
+
+    private static void handleRetrieveCarKioskResponse(Message message) {
+        String response = (String) message.getContent();
+        showAlert("Retrieve Car", response);
+    }
+
+    private static void handleForgotCodeKioskResponse(Message message) {
+        String response = (String) message.getContent();
+        showAlert("Parking Code", response);
+    }
+
     private static void handleParkingAvailability(Message message) {
         Integer availableSpots = (Integer) message.getContent();
         showAlert("Parking Availability", "Available spots: " + availableSpots);

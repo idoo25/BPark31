@@ -441,64 +441,62 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         }
     }
 
-    /**
-     * Handles parking entry with subscriber code (immediate parking)
-     */
-    public String enterParking(String userName) {
-        // Get user ID
-        int userID = getUserID(userName);
-        if (userID == -1) {
-            return "Invalid user code";
+    public String enterParking(int userID) {
+        // Check if user already has active parking
+        String checkActiveQry = "SELECT COUNT(*) FROM parkinginfo WHERE User_ID = ? AND statusEnum = 'active'";
+        try (PreparedStatement activeStmt = conn.prepareStatement(checkActiveQry)) {
+            activeStmt.setInt(1, userID);
+            try (ResultSet rs = activeStmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return "You already have an active parking session.";
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking active parking: " + e.getMessage());
+            return "Could not verify active parking.";
         }
 
-        // Check if spots are available
-        if (getAvailableParkingSpots() <= 0) {
-            return "No parking spots available";
+        // Check if parking is full
+        if (isParkingFull()) {
+            return "Parking is full. Try later.";
         }
 
-        // Find available parking spot
+        // Find first available parking spot
         int spotID = getAvailableParkingSpotID();
         if (spotID == -1) {
-            return "No available parking spot found";
+            return "No parking spots available.";
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime estimatedEnd = now.plusHours(4); // Default 4 hours
-
-        // Create parking info record for immediate parking
-        String qry = """
+        // Insert new parking record
+        String insertQry = """
             INSERT INTO parkinginfo 
-            (ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Actual_start_time, 
-             Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum) 
-            VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
-            """;
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, spotID);
-            stmt.setInt(2, userID);
-            stmt.setTimestamp(3, Timestamp.valueOf(now));
-            stmt.setTimestamp(4, Timestamp.valueOf(now));
-            stmt.setTimestamp(5, Timestamp.valueOf(estimatedEnd));
-            stmt.executeUpdate();
+            (ParkingSpot_ID, User_ID, Actual_start_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
+            VALUES (?, ?, NOW(), 'no', 'no', 'no', 'active')
+        """;
 
-            // Get the generated ParkingInfo_ID (parking code)
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+        try (PreparedStatement insertStmt = conn.prepareStatement(insertQry, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            insertStmt.setInt(1, spotID);
+            insertStmt.setInt(2, userID);
+            insertStmt.executeUpdate();
+
+            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     int parkingCode = generatedKeys.getInt(1);
-                    
-                    // Mark parking spot as occupied
+
+                    // Mark spot as occupied
                     updateParkingSpotStatus(spotID, true);
-                    
+
                     return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
+                } else {
+                    return "Entry failed: No parking code generated.";
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error handling entry: " + e.getMessage());
-            return "Entry failed";
+            return "Entry failed due to database error.";
         }
-        return "Entry failed";
     }
-
+    
     /**
      * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
      */
@@ -799,35 +797,38 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
     }
 
     /**
-     * Sends lost parking code to user
+     * Retrieves the active parking code for a user by their userID,
+     * sends an email notification, and returns the code as a string.
      */
-    public String sendLostParkingCode(String userName) {
+    public String sendLostParkingCode(int userID) {
         String qry = """
             SELECT pi.ParkingInfo_ID, u.Email, u.Phone, u.Name 
             FROM parkinginfo pi 
             JOIN users u ON pi.User_ID = u.User_ID 
-            WHERE u.UserName = ? AND pi.statusEnum = 'active'
-            """;
-        
+            WHERE u.User_ID = ? AND pi.statusEnum = 'active'
+        """;
+
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, userName);
+            stmt.setInt(1, userID);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     int parkingCode = rs.getInt("ParkingInfo_ID");
                     String email = rs.getString("Email");
                     String phone = rs.getString("Phone");
                     String name = rs.getString("Name");
-                    
-                    // SEND EMAIL NOTIFICATION
+
+                    // Send recovery email
                     EmailService.sendParkingCodeRecovery(email, name, String.valueOf(parkingCode));
-                    
-                    return String.valueOf(parkingCode);
+
+                    return "Your active parking code is: " + parkingCode;
                 }
             }
         } catch (SQLException e) {
             System.out.println("Error sending lost code: " + e.getMessage());
         }
-        return "No active parking session found";
+
+        return "No active parking session found for this user.";
     }
 
     /**
@@ -1095,15 +1096,14 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         return false;
     }
 
-    private void updateParkingSpotStatus(int spotID, boolean isOccupied) {
-        String qry = "UPDATE ParkingSpot SET isOccupied = ? WHERE ParkingSpot_ID = ?";
-        
+    public void updateParkingSpotStatus(int spotID, boolean occupied) {
+        String qry = "UPDATE parkingspot SET isOccupied = ? WHERE ParkingSpot_ID = ?";
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setBoolean(1, isOccupied);
+            stmt.setInt(1, occupied ? 1 : 0);
             stmt.setInt(2, spotID);
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Error updating parking spot status: " + e.getMessage());
+            System.out.println("Error updating parking spot: " + e.getMessage());
         }
     }
 
@@ -1340,21 +1340,23 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
         return false;
     }
     
-    public String getNameByUsername(String username) {
-        String qry = "SELECT Name FROM users WHERE UserName = ?";
+    public String getNameByUsernameAndUserID(String username, int userID) {
+        String qry = "SELECT Name FROM users WHERE UserName = ? AND User_ID = ?";
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
             stmt.setString(1, username);
+            stmt.setInt(2, userID);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                	System.out.println(rs.getString("Name"));
                     return rs.getString("Name");
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error getting name by username: " + e.getMessage());
+            System.out.println("Error getting name by username and userID: " + e.getMessage());
         }
         return null;
     }
-
+    
     public String getNameByUserID(int userID) {
         String qry = "SELECT Name FROM users WHERE User_ID = ?";
         try (PreparedStatement stmt = conn.prepareStatement(qry)) {
@@ -1368,5 +1370,82 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
             System.out.println("Error getting name by user ID: " + e.getMessage());
         }
         return null;
+    }
+    
+    public boolean isParkingFull() {
+        String qry = "SELECT COUNT(*) FROM ParkingSpot WHERE isOccupied = false";
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int availableSpots = rs.getInt(1);
+                    System.out.println("Available spots: " + availableSpots);
+                    return availableSpots <= 0; // explicit: true if full
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking parking availability: " + e.getMessage());
+        }
+        return true; // assume full on DB error
+    }
+    
+
+    /**
+     * Handles car retrieval given a ParkingInfo_ID.
+     * It sets statusEnum to 'retrieved', sets Actual_end_time to now,
+     * and frees up the parking spot (isOccupied = 0).
+     */
+    public String retrieveCarByCode(int parkingInfoID) {
+        System.out.println("[DEBUG] retrieveCarByCode called with ParkingInfo_ID: " + parkingInfoID);
+
+        String selectQry = """
+            SELECT ParkingSpot_ID
+            FROM parkinginfo
+            WHERE ParkingInfo_ID = ? AND statusEnum = 'active'
+        """;
+
+        try (PreparedStatement selectStmt = conn.prepareStatement(selectQry)) {
+            selectStmt.setInt(1, parkingInfoID);
+
+            try (ResultSet rs = selectStmt.executeQuery()) {
+                if (rs.next()) {
+                    int parkingSpotID = rs.getInt("ParkingSpot_ID");
+                    System.out.println("[DEBUG] Found active parking: Spot ID = " + parkingSpotID);
+
+                    // Update parkinginfo
+                    String updateParkingInfo = """
+                        UPDATE parkinginfo
+                        SET Actual_end_time = NOW(), statusEnum = 'finished'
+                        WHERE ParkingInfo_ID = ?
+                    """;
+                    try (PreparedStatement updateInfoStmt = conn.prepareStatement(updateParkingInfo)) {
+                        updateInfoStmt.setInt(1, parkingInfoID);
+                        int rowsUpdated = updateInfoStmt.executeUpdate();
+                        System.out.println("[DEBUG] Updated parkinginfo rows: " + rowsUpdated);
+                    }
+
+                    // Update parking spot
+                    String updateSpot = """
+                        UPDATE parkingspot
+                        SET isOccupied = 0
+                        WHERE ParkingSpot_ID = ?
+                    """;
+                    try (PreparedStatement updateSpotStmt = conn.prepareStatement(updateSpot)) {
+                        updateSpotStmt.setInt(1, parkingSpotID);
+                        int spotRows = updateSpotStmt.executeUpdate();
+                        System.out.println("[DEBUG] Updated parkingspot rows: " + spotRows);
+                    }
+
+                    return "Car retrieved successfully from spot " + parkingSpotID;
+                } else {
+                    System.out.println("[DEBUG] No active parking found for ParkingInfo_ID: " + parkingInfoID);
+                    return "No active parking session found for this code.";
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error retrieving car: " + e.getMessage());
+            e.printStackTrace();
+            return "Error retrieving car.";
+        }
     }
 }
