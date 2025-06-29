@@ -1448,4 +1448,44 @@ public int getAvailableSpotsForTimeSlot(LocalDateTime startTime, LocalDateTime e
             return "Error retrieving car.";
         }
     }
+    
+    public String handlePreorderEntry(int userID) {
+        String qry = """
+            SELECT ParkingInfo_ID, ParkingSpot_ID
+            FROM parkinginfo
+            WHERE User_ID = ?
+              AND statusEnum = 'reserved'
+              AND DATE(Estimated_start_time) = CURDATE()
+              AND NOW() BETWEEN Estimated_start_time AND Estimated_start_time + INTERVAL 15 MINUTE
+            ORDER BY Estimated_start_time ASC
+            LIMIT 1
+        """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setInt(1, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int parkingInfoID = rs.getInt("ParkingInfo_ID");
+                    int spotID = rs.getInt("ParkingSpot_ID");
+
+                    // Activate reservation
+                    try (PreparedStatement upd = conn.prepareStatement(
+                            "UPDATE parkinginfo SET statusEnum='active', Actual_start_time=NOW() WHERE ParkingInfo_ID=?")) {
+                        upd.setInt(1, parkingInfoID);
+                        upd.executeUpdate();
+                    }
+
+                    // Mark the spot as occupied
+                    updateParkingSpotStatus(spotID, true);
+
+                    return "Your pre-booked parking spot is now active. Spot: " + spotID;
+                } else {
+                    return "No valid reservation for today within the allowed time window.";
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking reservation: " + e.getMessage());
+            return "Error processing reservation.";
+        }
+    }
 }

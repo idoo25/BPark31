@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -17,9 +16,6 @@ import controllers.ParkingController;
 import controllers.ReportController;
 import entities.Message;
 import entities.Message.MessageType;
-import entities.ParkingOrder;
-import entities.ParkingReport;
-import entities.ParkingSubscriber;
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
 import serverGUI.ServerPortFrame;
@@ -64,7 +60,7 @@ public class ParkingServer extends AbstractServer {
 
     public synchronized void handleMessageFromClient(Object msg, ConnectionToClient client) {
         System.out.println("Message received: " + msg + " from " + client);
-        
+
         try {
             if (msg instanceof byte[]) {
                 try {
@@ -168,6 +164,13 @@ public class ParkingServer extends AbstractServer {
                     client.sendToClient(serialize(ret));
                     break;
 
+                case ACTIVATE_RESERVATION_KIOSK:
+                    int parkingInfoID = (Integer) message.getContent();
+                    String activateResult = parkingController.enterParkingWithReservation(parkingInfoID);
+                    ret = new Message(MessageType.ACTIVATE_RESERVATION_KIOSK_RESPONSE, activateResult);
+                    client.sendToClient(serialize(ret));
+                    break;
+
                 default:
                     System.out.println("Unknown message type: " + message.getType());
                     break;
@@ -178,7 +181,7 @@ public class ParkingServer extends AbstractServer {
             client.sendToClient(serialize(ret));
         }
     }
-    
+
     private synchronized void handleStringMessage(String message, ConnectionToClient client) {
         String[] arr = message.split("\\s");
 

@@ -35,6 +35,10 @@ public class ClientMessageHandler {
                 handleForgotCodeKioskResponse(message);
                 break;
 
+            case ACTIVATE_RESERVATION_KIOSK_RESPONSE:
+                handleActivateReservationKioskResponse(message);
+                break;
+
             case PARKING_AVAILABILITY_RESPONSE:
                 handleParkingAvailability(message);
                 break;
@@ -152,6 +156,14 @@ public class ClientMessageHandler {
     private static void handleForgotCodeKioskResponse(Message message) {
         String response = (String) message.getContent();
         showAlert("Parking Code", response);
+    }
+
+    /**
+     * NEW: Handles activating a reservation at the kiosk.
+     */
+    private static void handleActivateReservationKioskResponse(Message message) {
+        String response = (String) message.getContent();
+        showAlert("Activate Reservation", response);
     }
 
     private static void handleParkingAvailability(Message message) {

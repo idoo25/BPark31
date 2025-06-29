@@ -242,7 +242,16 @@ public class Message implements Serializable {
         /**
          * Kiosk forgot code response
          */
-        FORGOT_CODE_KIOSK_RESPONSE
+        FORGOT_CODE_KIOSK_RESPONSE,
+        /**
+         * Kiosk requests to activate a pre-booked reservation if valid
+         */
+        ACTIVATE_RESERVATION_KIOSK,
+        
+        /**
+         * Server responds to kiosk reservation activation request
+         */
+        ACTIVATE_RESERVATION_KIOSK_RESPONSE,
     }
 
     // Constructors ******************************************************

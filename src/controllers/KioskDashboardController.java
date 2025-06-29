@@ -57,12 +57,32 @@ public class KioskDashboardController {
             }
         });
     }
+
     @FXML
     private void handleForgotCode(ActionEvent event) {
         Message msg = new Message(FORGOT_CODE_KIOSK, loggedInUserID);
         BParkKioskApp.sendMessage(msg);
     }
 
+    @FXML
+    private void handleActivateReservation(ActionEvent event) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Activate Reservation");
+        dialog.setHeaderText(null);
+        dialog.setContentText("Enter your reservation code:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(codeStr -> {
+            try {
+                int parkingInfoID = Integer.parseInt(codeStr);
+                Message msg = new Message(ACTIVATE_RESERVATION_KIOSK, parkingInfoID);
+                BParkKioskApp.sendMessage(msg);
+            } catch (NumberFormatException e) {
+                showInfo("Invalid Input", "Reservation code must be numeric.");
+            }
+        });
+    }
+    
     @FXML
     private void handleExit(ActionEvent event) {
         try {
