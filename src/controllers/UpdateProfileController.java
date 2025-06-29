@@ -7,8 +7,6 @@ import entities.Message;
 import entities.Message.MessageType;
 import entities.ParkingSubscriber;
 
-public class UpdateProfileController {
-	
 	public static UpdateProfileController instance;
     @FXML
     private TextField emailField;
@@ -80,3 +78,4 @@ public void setPhone(String phone) {
 
 
 }
+
