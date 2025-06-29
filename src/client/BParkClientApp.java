@@ -1,20 +1,30 @@
 package client;
 
+import controllers.AttendantController;
+import controllers.ExtendParkingController;
+import controllers.ManagerController;
+import controllers.SubscriberController;
+import controllers.UpdateProfileController;
+import entities.Message;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.stage.Stage;
-import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import entities.Message;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import ocsf.client.ObservableClient;
 
 
+
 public class BParkClientApp extends Application {
+
     private static BParkClient client;
     private static String serverIP = "localhost";
     private static int serverPort = 5555;
     
+  	private static AttendantController attendantController;
+	  private static ManagerController managerController;
+	
     // Current user info
     private static String currentUser;
     private static String userType; // "sub", "emp", "mng"
@@ -23,6 +33,14 @@ public class BParkClientApp extends Application {
     public void start(Stage primaryStage) throws Exception {
         // Start with login screen
         showLoginScreen(primaryStage);
+    }
+    
+    public static UpdateProfileController getUpdateProfileController() {
+        return UpdateProfileController.instance;
+    }
+    
+    public static ExtendParkingController getExtendParkingController() {
+        return ExtendParkingController.instance;
     }
     
     private void showLoginScreen(Stage stage) throws Exception {
@@ -46,17 +64,27 @@ public class BParkClientApp extends Application {
         }
     }
     
+    public static boolean isConnected() {
+        return client != null && client.isConnected();
+    }
+    
     public static void switchToMainScreen(String userType) {
         try {
             Stage stage = new Stage();
             Parent root = null;
             
             switch (userType) {
-                case "sub":
-                    FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
-                    root = subLoader.load();
-                    stage.setTitle("BPark - Subscriber Portal");
-                    break;
+            case "sub":
+                FXMLLoader subLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/SubscriberMain.fxml"));
+                root = subLoader.load();
+                SubscriberController controller = subLoader.getController();
+
+                // Set the user name in the bottom label
+                controller.setUserName(getCurrentUser());
+
+                stage.setTitle("BPark - Subscriber Portal");
+                break;
+                
                     
                 case "emp":
                     FXMLLoader empLoader = new FXMLLoader(BParkClientApp.class.getResource("/client/AttendantMain.fxml"));
@@ -146,6 +174,10 @@ public class BParkClientApp extends Application {
     }
     
     // Getters and setters
+    
+    public static BParkClient getClient() {
+        return client;
+    } 
     public static String getCurrentUser() {
         return currentUser;
     }
@@ -187,4 +219,20 @@ public class BParkClientApp extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+  	
+	public static void setAttendantController(AttendantController controller) {
+		attendantController = controller;
+	}
+
+	public static AttendantController getAttendantController() {
+		return attendantController;
+	}
+
+	public static void setManagerController(controllers.ManagerController controller) {
+		managerController = controller;
+	}
+
+	public static controllers.ManagerController getManagerController() {
+		return managerController;
+	}
 }

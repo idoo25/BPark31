@@ -1,14 +1,20 @@
 package controllers;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.GridPane;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import client.BParkClientApp;
@@ -17,20 +23,29 @@ import entities.Message.MessageType;
 import entities.ParkingOrder;
 
 public class SubscriberController implements Initializable {
-
+    
     // Main menu buttons
     @FXML private Button btnCheckAvailability;
+    @FXML private Button btnEnterParking;
+    @FXML private Button btnExitParking;
     @FXML private Button btnMakeReservation;
     @FXML private Button btnViewHistory;
     @FXML private Button btnLostCode;
     @FXML private Button btnUpdateProfile;
     @FXML private Button btnLogout;
-
+    
+    
+    // Parking entry/exit controls
+    @FXML private TextField txtParkingCode;
+    @FXML private TextField txtSubscriberCode;
+    @FXML private Label lblAvailableSpots;
+    @FXML private Label lblUserInfo;
+    
     // Reservation controls
     @FXML private DatePicker datePickerReservation;
     @FXML private ComboBox<String> comboTimeSlot;
     @FXML private Label lblReservationStatus;
-
+    
     // Parking history table
     @FXML private TableView<ParkingOrder> tableParkingHistory;
     @FXML private TableColumn<ParkingOrder, String> colDate;
@@ -38,25 +53,32 @@ public class SubscriberController implements Initializable {
     @FXML private TableColumn<ParkingOrder, String> colExit;
     @FXML private TableColumn<ParkingOrder, String> colSpot;
     @FXML private TableColumn<ParkingOrder, String> colStatus;
-
+    
     // Profile update
     @FXML private TextField txtPhone;
     @FXML private TextField txtEmail;
-
-    // Status label
-    @FXML private Label lblAvailableSpots;
-
+    
     // Current view container
     @FXML private VBox mainContent;
-
+    
+    private static boolean manualCheckRequested = false;
+    
+    public static void setManualCheckRequested(boolean value) {
+        manualCheckRequested = value;
+    }
+    
+    public void setUserName(String userName) {
+        lblUserInfo.setText("User: " + userName);
+    }
+    
     private ObservableList<ParkingOrder> parkingHistory = FXCollections.observableArrayList();
-
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupUI();
-        loadInitialData();
+       
     }
-
+    
     private void setupUI() {
         // Initialize time slots for reservation (15-minute intervals)
         ObservableList<String> timeSlots = FXCollections.observableArrayList();
@@ -68,7 +90,7 @@ public class SubscriberController implements Initializable {
         if (comboTimeSlot != null) {
             comboTimeSlot.setItems(timeSlots);
         }
-
+        
         // Set date picker constraints (1-7 days from today)
         if (datePickerReservation != null) {
             datePickerReservation.setDayCellFactory(picker -> new DateCell() {
@@ -80,51 +102,95 @@ public class SubscriberController implements Initializable {
                 }
             });
         }
-
+        
         // Setup parking history table
         if (tableParkingHistory != null) {
             tableParkingHistory.setItems(parkingHistory);
             // Setup column cell value factories here
         }
     }
+    
 
-    private void loadInitialData() {
-        // Check parking availability on startup
-        checkParkingAvailability();
-    }
-
+    
     // ===== Action Handlers =====
-
+    
+    @FXML
+    private void handleShowAvailableSpots() {
+    	setManualCheckRequested(true);
+        Message checkMsg = new Message(Message.MessageType.CHECK_PARKING_AVAILABILITY, null);
+        BParkClientApp.sendMessage(checkMsg);
+    }
+    
     @FXML
     private void checkParkingAvailability() {
         Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
         BParkClientApp.sendMessage(msg);
     }
-
+    
+    @FXML
+    private void handleImmediateParking() {
+        String subscriberCode = BParkClientApp.getCurrentUser();
+        if (subscriberCode != null && !subscriberCode.isEmpty()) {
+            Message msg = new Message(MessageType.ENTER_PARKING, subscriberCode);
+            BParkClientApp.sendMessage(msg);
+        } else {
+            showAlert("Error", "Subscriber code not found");
+        }
+    }
+    
+    @FXML
+    private void handleExitParking() {
+        String parkingCode = txtParkingCode.getText().trim();
+        if (parkingCode.isEmpty()) {
+            showAlert("Error", "Please enter your parking code");
+            return;
+        }
+        
+        Message msg = new Message(MessageType.EXIT_PARKING, parkingCode);
+        BParkClientApp.sendMessage(msg);
+    }
+    
     @FXML
     private void handleMakeReservation() {
         LocalDate selectedDate = datePickerReservation.getValue();
         String selectedTime = comboTimeSlot.getValue();
-
+        
         if (selectedDate == null || selectedTime == null) {
             showAlert("Error", "Please select both date and time");
             return;
         }
-
+        
+        // Format: "YYYY-MM-DD HH:MM"
         String dateTimeStr = selectedDate.toString() + " " + selectedTime;
         String reservationData = BParkClientApp.getCurrentUser() + "," + dateTimeStr;
-
+        
         Message msg = new Message(MessageType.RESERVE_PARKING, reservationData);
         BParkClientApp.sendMessage(msg);
     }
-
+    
+    @FXML
+    private void handleActivateReservation() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Activate Reservation");
+        dialog.setHeaderText("Enter your reservation code:");
+        dialog.setContentText("Code:");
+        
+        dialog.showAndWait().ifPresent(code -> {
+            if (!code.trim().isEmpty()) {
+                String activationData = BParkClientApp.getCurrentUser() + "," + code;
+                Message msg = new Message(MessageType.ACTIVATE_RESERVATION, activationData);
+                BParkClientApp.sendMessage(msg);
+            }
+        });
+    }
+    
     @FXML
     private void handleCancelReservation() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Cancel Reservation");
         dialog.setHeaderText("Enter reservation code to cancel:");
         dialog.setContentText("Code:");
-
+        
         dialog.showAndWait().ifPresent(code -> {
             if (!code.trim().isEmpty()) {
                 String cancellationData = BParkClientApp.getCurrentUser() + "," + code;
@@ -133,100 +199,81 @@ public class SubscriberController implements Initializable {
             }
         });
     }
-
+    
     @FXML
     private void handleViewHistory() {
         Message msg = new Message(MessageType.GET_PARKING_HISTORY, BParkClientApp.getCurrentUser());
         BParkClientApp.sendMessage(msg);
     }
-
+    
     @FXML
     private void handleLostCode() {
         Message msg = new Message(MessageType.REQUEST_LOST_CODE, BParkClientApp.getCurrentUser());
         BParkClientApp.sendMessage(msg);
     }
-
+    
     @FXML
-    private void handleExtendParking() {
-        Dialog<String[]> dialog = new Dialog<>();
-        dialog.setTitle("Extend Parking Time");
-        dialog.setHeaderText("Enter parking code and extension hours:");
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        TextField codeField = new TextField();
-        ComboBox<String> hoursCombo = new ComboBox<>();
-        hoursCombo.getItems().addAll("1", "2", "3", "4");
-        hoursCombo.setValue("1");
-
-        grid.add(new Label("Parking Code:"), 0, 0);
-        grid.add(codeField, 1, 0);
-        grid.add(new Label("Extension Hours:"), 0, 1);
-        grid.add(hoursCombo, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        dialog.setResultConverter(buttonType -> {
-            if (buttonType == ButtonType.OK) {
-                return new String[]{codeField.getText(), hoursCombo.getValue()};
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(result -> {
-            if (result[0] != null && !result[0].trim().isEmpty()) {
-                String extensionData = result[0] + "," + result[1];
-                Message msg = new Message(MessageType.EXTEND_PARKING, extensionData);
-                BParkClientApp.sendMessage(msg);
-            }
-        });
+    private void handleExtendParking() { //***
+    	   try {
+    	        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ExtendParkingView.fxml"));
+    	        Node extendParkingView = loader.load();
+    	        mainContent.getChildren().setAll(extendParkingView); 
+    	    } catch (IOException e) {
+    	        e.printStackTrace();
+    	    }
     }
+   
 
-    @FXML
-    private void handleUpdateProfile() {
-        String phone = txtPhone.getText().trim();
-        String email = txtEmail.getText().trim();
 
-        if (phone.isEmpty() || email.isEmpty()) {
-            showAlert("Error", "Please fill in all fields");
-            return;
-        }
-
-        String updateData = BParkClientApp.getCurrentUser() + "," + phone + "," + email;
-        Message msg = new Message(MessageType.UPDATE_SUBSCRIBER_INFO, updateData);
-        BParkClientApp.sendMessage(msg);
-    }
-
+    
     @FXML
     private void handleLogout() {
+        // Send logout notification
         BParkClientApp.sendStringMessage("LoggedOut " + BParkClientApp.getCurrentUser());
-
+        
+        // Close connection and return to login
         try {
+            // Close current window and show login again
             btnLogout.getScene().getWindow().hide();
+            // The main app should handle showing login screen again
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
+    
+    @FXML
+    private void showExitParkingView() {
+        // Show exit parking section
+        showAlert("Exit Parking", "Enter your parking code in the field below and click Exit");
+    }
+    
     @FXML
     private void showReservationView() {
+        // Show reservation section
         showAlert("Make Reservation", "Select date and time for your reservation");
     }
-
+    
     @FXML
     private void showProfileView() {
-        showAlert("Update Profile", "Update your phone and email information");
+    	  try {
+    		// Load the FXML file for the profile update screen
+              FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/UpdateProfileView.fxml"));
+           // Load the actual UI components from the FXML file into a Node object
+              Node profileView = loader.load();
+              mainContent.getChildren().setAll(profileView);  // This replaces the center of the UI
+          } catch (IOException e) {
+              e.printStackTrace();
+          }
     }
-
+    
+   
     // ===== UI Update Methods =====
-
+    
     public void updateAvailableSpots(int spots) {
         if (lblAvailableSpots != null) {
             lblAvailableSpots.setText("Available Spots: " + spots);
-
+            
+            // Update UI based on availability
             boolean canReserve = spots >= (100 * 0.4); // 40% rule
             if (btnMakeReservation != null) {
                 btnMakeReservation.setDisable(!canReserve);
@@ -236,14 +283,14 @@ public class SubscriberController implements Initializable {
             }
         }
     }
-
+    
     public void updateParkingHistory(ObservableList<ParkingOrder> history) {
         this.parkingHistory.clear();
         this.parkingHistory.addAll(history);
     }
-
+    
     // ===== Utility Methods =====
-
+    
     private void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -251,7 +298,7 @@ public class SubscriberController implements Initializable {
         alert.setContentText(content);
         alert.showAndWait();
     }
-
+    
     private void showError(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
