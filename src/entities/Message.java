@@ -28,232 +28,80 @@ public class Message implements Serializable {
 	 * The message type enumeration for parking system operations.
 	 */
 	public enum MessageType {
-		/**
-		 * Register new subscriber request
-		 */
+		// General operations
 		REGISTER_SUBSCRIBER,
-		/**
-		 * Registration response
-		 */
 		REGISTRATION_RESPONSE,
-		/**
-		 * Generate unique username request
-		 */
 		GENERATE_USERNAME,
-		/**
-		 * Generated username response
-		 */
 		USERNAME_RESPONSE,
-
-		/**
-		 * Subscriber login request
-		 */
 		SUBSCRIBER_LOGIN,
-		/**
-		 * Subscriber login response
-		 */
 		SUBSCRIBER_LOGIN_RESPONSE,
-		/**
-		 * Check parking availability
-		 */
+
+		// Parking operations
 		CHECK_PARKING_AVAILABILITY,
-		/**
-		 * Parking availability response
-		 */
 		PARKING_AVAILABILITY_RESPONSE,
-		/**
-		 * Reserve parking spot
-		 */
 		RESERVE_PARKING,
-		/**
-		 * Reservation response
-		 */
 		RESERVATION_RESPONSE,
-		/**
-		 * Enter parking request
-		 */
 		ENTER_PARKING,
-		/**
-		 * Enter parking response
-		 */
 		ENTER_PARKING_RESPONSE,
-		/**
-		 * Exit parking request
-		 */
 		EXIT_PARKING,
-		/**
-		 * Exit parking response
-		 */
 		EXIT_PARKING_RESPONSE,
-		/**
-		 * Extend parking time
-		 */
 		EXTEND_PARKING,
-		/**
-		 * Extend parking response
-		 */
 		EXTEND_PARKING_RESPONSE,
-		/**
-		 * Request lost parking code
-		 */
 		REQUEST_LOST_CODE,
-		/**
-		 * Lost code response
-		 */
 		LOST_CODE_RESPONSE,
-		/**
-		 * Get parking history
-		 */
 		GET_PARKING_HISTORY,
-		/**
-		 * Parking history response
-		 */
 		PARKING_HISTORY_RESPONSE,
-		/**
-		 * Manager login request
-		 */
+
+		// Manager operations
 		MANAGER_LOGIN,
-		/**
-		 * Manager login response
-		 */
 		MANAGER_LOGIN_RESPONSE,
-		/**
-		 * Get active parkings (for attendant)
-		 */
 		GET_ACTIVE_PARKINGS,
-		/**
-		 * Active parkings response
-		 */
 		ACTIVE_PARKINGS_RESPONSE,
-		/**
-		 * Manager get reports request
-		 */
 		MANAGER_GET_REPORTS,
-		/**
-		 * Manager send reports response
-		 */
 		MANAGER_SEND_REPORTS,
-		/**
-		 * Update subscriber information
-		 */
 		UPDATE_SUBSCRIBER_INFO,
-		/**
-		 * Update subscriber response
-		 */
 		UPDATE_SUBSCRIBER_RESPONSE,
-		/**
-		 * Generate monthly reports
-		 */
 		GENERATE_MONTHLY_REPORTS,
-		/**
-		 * Monthly reports response
-		 */
 		MONTHLY_REPORTS_RESPONSE,
 
-		/**
-		 * Get available time slots for a date/time (15-minute precision)
-		 */
+		// Reservations
 		GET_TIME_SLOTS,
-		/**
-		 * Time slots response
-		 */
 		TIME_SLOTS_RESPONSE,
-		/**
-		 * Make pre-booking reservation (DATETIME format)
-		 */
 		MAKE_PREBOOKING,
-		/**
-		 * Pre-booking response
-		 */
 		PREBOOKING_RESPONSE,
-		/**
-		 * Spontaneous parking entry (immediate spot assignment)
-		 */
 		SPONTANEOUS_PARKING,
-		/**
-		 * Spontaneous parking response
-		 */
 		SPONTANEOUS_RESPONSE,
-		/**
-		 * Request parking extension (during last hour)
-		 */
 		REQUEST_EXTENSION,
-		/**
-		 * Extension response
-		 */
 		EXTENSION_RESPONSE,
-		/**
-		 * Get system status
-		 */
 		GET_SYSTEM_STATUS,
-		/**
-		 * System status response
-		 */
 		SYSTEM_STATUS_RESPONSE,
 
-		/**
-		 * Activate reservation when arriving
-		 */
+		// Activation & cancellation
 		ACTIVATE_RESERVATION,
-		/**
-		 * Activation response
-		 */
 		ACTIVATION_RESPONSE,
-		/**
-		 * Cancel reservation
-		 */
 		CANCEL_RESERVATION,
-		/**
-		 * Cancellation response
-		 */
 		CANCELLATION_RESPONSE,
-		/**
-		 * Kiosk login response
-		 */
-		KIOSK_LOGIN_RESPONSE,
-		/**
-		 * Kiosk RF Login
-		 */
-		KIOSK_RF_LOGIN,
-		/**
-		 * Kiosk ID Login
-		 */
-		KIOSK_ID_LOGIN,
-		/**
-		 * Kiosk enter parking request
-		 */
-		ENTER_PARKING_KIOSK,
-		/**
-		 * Kiosk enter parking response
-		 */
-		ENTER_PARKING_KIOSK_RESPONSE,
-		/**
-		 * Kiosk retrieve car request
-		 */
-		RETRIEVE_CAR_KIOSK,
-		/**
-		 * Kiosk retrieve car response
-		 */
-		RETRIEVE_CAR_KIOSK_RESPONSE,
-		/**
-		 * Kiosk forgot code request
-		 */
-		FORGOT_CODE_KIOSK,
-		/**
-		 * Kiosk forgot code response
-		 */
-		FORGOT_CODE_KIOSK_RESPONSE,
-		/**
-		 * Kiosk requests to activate a pre-booked reservation if valid
-		 */
-		ACTIVATE_RESERVATION_KIOSK,
 
-		/**
-		 * Server responds to kiosk reservation activation request
-		 */
+		// Kiosk-specific operations
+		KIOSK_LOGIN_RESPONSE,
+		KIOSK_RF_LOGIN,
+		KIOSK_ID_LOGIN,
+		ENTER_PARKING_KIOSK,
+		ENTER_PARKING_KIOSK_RESPONSE,
+		RETRIEVE_CAR_KIOSK,
+		RETRIEVE_CAR_KIOSK_RESPONSE,
+		FORGOT_CODE_KIOSK,
+		FORGOT_CODE_KIOSK_RESPONSE,
+		ACTIVATE_RESERVATION_KIOSK,
 		ACTIVATE_RESERVATION_KIOSK_RESPONSE,
 
+		// Additional subscriber operations
+		GET_SUBSCRIBER_BY_NAME,
+		GET_ALL_SUBSCRIBERS,
+		SHOW_ALL_SUBSCRIBERS,
+		SHOW_SUBSCRIBER_DETAILS,
 		REQUEST_SUBSCRIBER_DATA,
+		SUBSCRIBER_DATA_RESPONSE
 	}
 
 	// Constructors ******************************************************
@@ -269,7 +117,6 @@ public class Message implements Serializable {
 	}
 
 	// Methods ***********************************************************
-
 	/**
 	 * Returns the type of the message.
 	 * 

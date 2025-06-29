@@ -2,10 +2,19 @@ package client;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
-import entities.*;
-
+import controllers.AttendantController;
+import controllers.ExtendParkingController;
+import controllers.LoginController;
+import controllers.ManagerController;
+import controllers.UpdateProfileController;
+import entities.Message;
+import entities.ParkingOrder;
+import entities.ParkingReport;
+import entities.ParkingSubscriber;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.scene.control.Alert;
 import controllers.KioskController;
 
@@ -72,12 +81,38 @@ public class ClientMessageHandler {
                 handleUpdateResponse(message);
                 break;
 
+            case SUBSCRIBER_DATA_RESPONSE:
+                handleSubscriberDataResponse(message);
+                break;
+
             case ACTIVATION_RESPONSE:
                 handleActivationResponse(message);
                 break;
 
             case CANCELLATION_RESPONSE:
                 handleCancellationResponse(message);
+                break;
+
+            case EXTENSION_RESPONSE:
+                handleExtendParkingResponse(message);
+                break;
+
+            case SHOW_SUBSCRIBER_DETAILS:
+                ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+                Platform.runLater(() -> {
+                    if (BParkClientApp.getAttendantController() != null)
+                        BParkClientApp.getAttendantController().showSubscriberDetails(subscriber);
+                    else if (BParkClientApp.getManagerController() != null)
+                        BParkClientApp.getManagerController().showSubscriberDetails(subscriber);
+                });
+                break;
+
+            case SHOW_ALL_SUBSCRIBERS:
+                List<ParkingSubscriber> subs = (List<ParkingSubscriber>) message.getContent();
+                if (BParkClientApp.getAttendantController() != null)
+                    BParkClientApp.getAttendantController().updateSubscriberTable(subs);
+                if (BParkClientApp.getManagerController() != null)
+                    BParkClientApp.getManagerController().updateSubscriberTable(subs);
                 break;
 
             default:
@@ -120,23 +155,26 @@ public class ClientMessageHandler {
         }
     }
 
-    private static void handleStringLoginResponse(String data) {
-        if (!data.equals("None")) {
-            BParkClientApp.setUserType(data);
-            BParkClientApp.switchToMainScreen(data);
-        } else {
-            showAlert("Login Failed", "Invalid credentials");
-        }
-    }
-
     private static void handleLoginResponse(Message message) {
         ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+
         if (subscriber != null) {
             BParkClientApp.setCurrentUser(subscriber.getSubscriberCode());
             BParkClientApp.setUserType(subscriber.getUserType());
             BParkClientApp.switchToMainScreen(subscriber.getUserType());
+
+            Platform.runLater(() -> 
+                LoginController.getInstance().handleLoginSuccess(subscriber.getUserType())
+            );
         } else {
-            showAlert("Login Failed", "Invalid username or user not found");
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Login Failed");
+                alert.setHeaderText(null);
+                alert.setContentText("Invalid username/userCode or user not found.");
+                alert.showAndWait();
+                LoginController.getInstance().handleLoginFailed(null);
+            });
         }
     }
 
@@ -159,9 +197,6 @@ public class ClientMessageHandler {
         showAlert("Parking Code", response);
     }
 
-    /**
-     * NEW: Handles activating a reservation at the kiosk.
-     */
     private static void handleActivateReservationKioskResponse(Message message) {
         String response = (String) message.getContent();
         showAlert("Activate Reservation", response);
@@ -217,11 +252,33 @@ public class ClientMessageHandler {
     private static void handleActiveParkings(Message message) {
         ArrayList<ParkingOrder> activeParkings = (ArrayList<ParkingOrder>) message.getContent();
         System.out.println("Received " + activeParkings.size() + " active parking sessions");
+
+        AttendantController controller = BParkClientApp.getAttendantController();
+        if (controller != null) {
+            controller.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+        }
+
+        ManagerController managerController = BParkClientApp.getManagerController();
+        if (managerController != null) {
+            managerController.updateActiveParkings(FXCollections.observableArrayList(activeParkings));
+        }
     }
 
     private static void handleUpdateResponse(Message message) {
         String response = (String) message.getContent();
         showAlert("Update Profile", response);
+    }
+
+    private static void handleSubscriberDataResponse(Message message) {
+        ParkingSubscriber subscriber = (ParkingSubscriber) message.getContent();
+        Platform.runLater(() -> {
+            UpdateProfileController controller = BParkClientApp.getUpdateProfileController();
+            controller.setFieldPrompts(
+                subscriber.getEmail(),
+                subscriber.getPhoneNumber(),
+                subscriber.getCarNumber()
+            );
+        });
     }
 
     private static void handleActivationResponse(Message message) {
@@ -238,9 +295,34 @@ public class ClientMessageHandler {
         showAlert("Reservation Cancellation", response);
     }
 
-    /**
-     * Serialize a Message object to byte array
-     */
+    // String message handlers (legacy)
+    
+    private static void handleStringLoginResponse(String data) {
+        if (!data.equals("None")) {
+            BParkClientApp.setUserType(data);
+            BParkClientApp.switchToMainScreen(data);
+        } else {
+            showAlert("Login Failed", "Invalid credentials");
+        }
+    }
+    
+    private static void handleExtendParkingResponse(Message message) {
+        String response = (String) message.getContent();
+        if (response.contains("extended")) {
+            showAlert("Extension Successful", response);
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage("Extension successful!", "green");
+            }
+        } else {
+            showAlert("Extension Failed", response);
+            ExtendParkingController controller = BParkClientApp.getExtendParkingController();
+            if (controller != null) {
+                controller.setStatusMessage(response, "red");
+            }
+        }
+    }
+
     public static byte[] serialize(Message msg) {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream out = new ObjectOutputStream(bos)) {
@@ -253,9 +335,6 @@ public class ClientMessageHandler {
         }
     }
 
-    /**
-     * Deserialize a byte array back into an object
-     */
     public static Object deserialize(Object msg) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream((byte[]) msg);
              ObjectInputStream in = new ObjectInputStream(bis)) {
@@ -266,9 +345,6 @@ public class ClientMessageHandler {
         }
     }
 
-    /**
-     * Show an alert dialog on the UI thread
-     */
     private static void showAlert(String title, String content) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
