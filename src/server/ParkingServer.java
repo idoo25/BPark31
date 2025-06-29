@@ -1,10 +1,6 @@
 package server;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +17,7 @@ import ocsf.server.ConnectionToClient;
 import serverGUI.ServerPortFrame;
 
 public class ParkingServer extends AbstractServer {
+
     final public static Integer DEFAULT_PORT = 5555;
 
     public static ParkingController parkingController;
@@ -63,29 +60,13 @@ public class ParkingServer extends AbstractServer {
 
         try {
             if (msg instanceof byte[]) {
-                try {
-                    msg = deserialize(msg);
-                } catch (Exception ex) {
-                    System.err.println("Error during deserialization: " + ex.getMessage());
-                    ex.printStackTrace();
-                    return;
-                }
+                msg = deserialize(msg);
             }
 
             if (msg instanceof Message) {
-                try {
-                    handleMessageObject((Message) msg, client);
-                } catch (Exception ex) {
-                    System.err.println("Error handling Message object: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
+                handleMessageObject((Message) msg, client);
             } else if (msg instanceof String) {
-                try {
-                    handleStringMessage((String) msg, client);
-                } catch (Exception ex) {
-                    System.err.println("Error handling String message: " + ex.getMessage());
-                    ex.printStackTrace();
-                }
+                handleStringMessage((String) msg, client);
             }
 
         } catch (Exception e) {
@@ -99,76 +80,28 @@ public class ParkingServer extends AbstractServer {
 
         try {
             switch (message.getType()) {
-
                 case KIOSK_ID_LOGIN:
-                    String combined = (String) message.getContent();
-                    String[] parts = combined.split(",");
-                    if (parts.length != 2) {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
-                        client.sendToClient(serialize(ret));
-                        return;
-                    }
-
-                    String username = parts[0].trim();
-                    int userID;
-                    try {
-                        userID = Integer.parseInt(parts[1].trim());
-                    } catch (NumberFormatException e) {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
-                        client.sendToClient(serialize(ret));
-                        return;
-                    }
-
-                    String name = parkingController.getNameByUsernameAndUserID(username, userID);
-                    if (name != null) {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, name + "," + userID);
-                    } else {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
-                    }
-                    client.sendToClient(serialize(ret));
+                    handleKioskIdLogin(message, client);
                     break;
 
                 case KIOSK_RF_LOGIN:
-                    int rfUserID = (Integer) message.getContent();
-                    String nameByID = parkingController.getNameByUserID(rfUserID);
-                    if (nameByID != null) {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, nameByID + "," + rfUserID);
-                    } else {
-                        ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
-                    }
-                    client.sendToClient(serialize(ret));
+                    handleKioskRFLogin(message, client);
                     break;
 
                 case ENTER_PARKING_KIOSK:
-                    int enteringUserID = (Integer) message.getContent();
-                    if (parkingController.isParkingFull()) {
-                        ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, "FULL");
-                    } else {
-                        String entryResult = parkingController.enterParking(enteringUserID);
-                        ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, entryResult);
-                    }
-                    client.sendToClient(serialize(ret));
+                    handleEnterParkingKiosk(message, client);
                     break;
 
                 case RETRIEVE_CAR_KIOSK:
-                    int parkingCode = (Integer) message.getContent();
-                    String retrievalResult = parkingController.retrieveCarByCode(parkingCode);
-                    ret = new Message(MessageType.RETRIEVE_CAR_KIOSK_RESPONSE, retrievalResult);
-                    client.sendToClient(serialize(ret));
+                    handleRetrieveCarKiosk(message, client);
                     break;
 
                 case FORGOT_CODE_KIOSK:
-                    int forgotUserID = (Integer) message.getContent();
-                    String code = parkingController.sendLostParkingCode(forgotUserID);
-                    ret = new Message(MessageType.FORGOT_CODE_KIOSK_RESPONSE, code);
-                    client.sendToClient(serialize(ret));
+                    handleForgotCodeKiosk(message, client);
                     break;
 
                 case ACTIVATE_RESERVATION_KIOSK:
-                    int parkingInfoID = (Integer) message.getContent();
-                    String activateResult = parkingController.enterParkingWithReservation(parkingInfoID);
-                    ret = new Message(MessageType.ACTIVATE_RESERVATION_KIOSK_RESPONSE, activateResult);
-                    client.sendToClient(serialize(ret));
+                    handleActivateReservationKiosk(message, client);
                     break;
 
                 default:
@@ -180,6 +113,81 @@ public class ParkingServer extends AbstractServer {
             ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "Server error");
             client.sendToClient(serialize(ret));
         }
+    }
+
+    private void handleKioskIdLogin(Message message, ConnectionToClient client) throws IOException {
+        String combined = (String) message.getContent();
+        String[] parts = combined.split(",");
+        Message ret;
+
+        if (parts.length != 2) {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+            client.sendToClient(serialize(ret));
+            return;
+        }
+
+        String username = parts[0].trim();
+        int userID;
+        try {
+            userID = Integer.parseInt(parts[1].trim());
+        } catch (NumberFormatException e) {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+            client.sendToClient(serialize(ret));
+            return;
+        }
+
+        String name = parkingController.getNameByUsernameAndUserID(username, userID);
+        if (name != null) {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, name + "," + userID);
+        } else {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+        }
+        client.sendToClient(serialize(ret));
+    }
+
+    private void handleKioskRFLogin(Message message, ConnectionToClient client) throws IOException {
+        int rfUserID = (Integer) message.getContent();
+        String nameByID = parkingController.getNameByUserID(rfUserID);
+        Message ret;
+        if (nameByID != null) {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, nameByID + "," + rfUserID);
+        } else {
+            ret = new Message(MessageType.KIOSK_LOGIN_RESPONSE, "");
+        }
+        client.sendToClient(serialize(ret));
+    }
+
+    private void handleEnterParkingKiosk(Message message, ConnectionToClient client) throws IOException {
+        int enteringUserID = (Integer) message.getContent();
+        Message ret;
+        if (parkingController.isParkingFull()) {
+            ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, "FULL");
+        } else {
+            String entryResult = parkingController.enterParking(enteringUserID);
+            ret = new Message(MessageType.ENTER_PARKING_KIOSK_RESPONSE, entryResult);
+        }
+        client.sendToClient(serialize(ret));
+    }
+
+    private void handleRetrieveCarKiosk(Message message, ConnectionToClient client) throws IOException {
+        int parkingCode = (Integer) message.getContent();
+        String retrievalResult = parkingController.retrieveCarByCode(parkingCode);
+        Message ret = new Message(MessageType.RETRIEVE_CAR_KIOSK_RESPONSE, retrievalResult);
+        client.sendToClient(serialize(ret));
+    }
+
+    private void handleForgotCodeKiosk(Message message, ConnectionToClient client) throws IOException {
+        int forgotUserID = (Integer) message.getContent();
+        String code = parkingController.sendLostParkingCode(forgotUserID);
+        Message ret = new Message(MessageType.FORGOT_CODE_KIOSK_RESPONSE, code);
+        client.sendToClient(serialize(ret));
+    }
+
+    private void handleActivateReservationKiosk(Message message, ConnectionToClient client) throws IOException {
+        int parkingInfoID = (Integer) message.getContent();
+        String activateResult = parkingController.enterParkingWithReservation(parkingInfoID);
+        Message ret = new Message(MessageType.ACTIVATE_RESERVATION_KIOSK_RESPONSE, activateResult);
+        client.sendToClient(serialize(ret));
     }
 
     private synchronized void handleStringMessage(String message, ConnectionToClient client) {

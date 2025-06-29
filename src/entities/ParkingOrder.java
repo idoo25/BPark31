@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 public class ParkingOrder implements Serializable {
     private static final long serialVersionUID = 1L;
     
+    
     private int orderID;
     private String parkingCode;
     private String subscriberName;
@@ -134,7 +135,7 @@ public class ParkingOrder implements Serializable {
         if (entryTime != null) {
             return entryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
-        return "";
+        return "N/A";
     }
     
     public String getFormattedExitTime() {
@@ -148,7 +149,7 @@ public class ParkingOrder implements Serializable {
         if (expectedExitTime != null) {
             return expectedExitTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         }
-        return "";
+        return "N/A";
     }
     
     public long getParkingDurationMinutes() {

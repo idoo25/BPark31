@@ -295,17 +295,6 @@ public class ClientMessageHandler {
         showAlert("Reservation Cancellation", response);
     }
 
-    // String message handlers (legacy)
-    
-    private static void handleStringLoginResponse(String data) {
-        if (!data.equals("None")) {
-            BParkClientApp.setUserType(data);
-            BParkClientApp.switchToMainScreen(data);
-        } else {
-            showAlert("Login Failed", "Invalid credentials");
-        }
-    }
-    
     private static void handleExtendParkingResponse(Message message) {
         String response = (String) message.getContent();
         if (response.contains("extended")) {
