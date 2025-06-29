@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 
 import entities.*;
+
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import controllers.KioskController;
