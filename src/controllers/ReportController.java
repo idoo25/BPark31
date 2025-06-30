@@ -17,17 +17,17 @@ import server.DBController;
  */
 
 public class ReportController {
-	protected Connection conn;
+//	protected Connection conn;
 	public int successFlag;
 
 	public ReportController(String dbname, String pass) {
 		DBController.initializeConnection(dbname, pass);
-		conn = DBController.getInstance().getConnection();
+//		conn = DBController.getInstance().getConnection();
 	}
 
-	public Connection getConnection() {
-		return conn;
-	}
+//	public Connection getConnection() {
+//		return conn;
+//	}
 
 	/**
 	 * Establishes connection to the MySQL database
@@ -126,6 +126,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateParkingTimeReport() {
 		ParkingReport report = new ParkingReport("PARKING_TIME", LocalDate.now());
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -153,6 +154,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error generating parking time report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return report;
@@ -164,6 +167,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateSubscriberStatusReport() {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", LocalDate.now());
+		Connection conn = DBController.getInstance().getConnection();
 
 		// Get active subscribers count
 		String activeSubQry = """
@@ -225,6 +229,8 @@ public class ReportController {
 
 		} catch (SQLException e) {
 			System.out.println("Error generating subscriber status report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return report;
@@ -235,6 +241,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateMonthlyParkingTimeReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("PARKING_TIME", reportDate);
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -267,6 +274,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error generating monthly parking time report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return null;
@@ -277,6 +286,7 @@ public class ReportController {
 	 */
 	private ParkingReport generateMonthlySubscriberStatusReport(LocalDate reportDate) {
 		ParkingReport report = new ParkingReport("SUBSCRIBER_STATUS", reportDate);
+		Connection conn = DBController.getInstance().getConnection();
 
 		// Get active subscribers for the month
 		String activeSubQry = """
@@ -346,6 +356,8 @@ public class ReportController {
 
 		} catch (SQLException e) {
 			System.out.println("Error generating monthly subscriber status report: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return null;
@@ -356,6 +368,7 @@ public class ReportController {
 	 */
 	private void storeMonthlyReports(ArrayList<ParkingReport> reports) {
 		String qry = "INSERT INTO reports (Report_Type, Generated_Date, Report_Data) VALUES (?, NOW(), ?)";
+		Connection conn = DBController.getInstance().getConnection();
 
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			for (ParkingReport report : reports) {
@@ -366,6 +379,8 @@ public class ReportController {
 			System.out.println("Monthly reports stored successfully");
 		} catch (SQLException e) {
 			System.out.println("Error storing monthly reports: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -374,6 +389,7 @@ public class ReportController {
 	 */
 	public ArrayList<ParkingReport> getHistoricalReports(String reportType, LocalDate fromDate, LocalDate toDate) {
 		ArrayList<ParkingReport> reports = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT * FROM reports
@@ -402,6 +418,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting historical reports: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return reports;
@@ -412,6 +430,7 @@ public class ReportController {
 	 */
 	public ArrayList<String> getPeakUsageHours() {
 		ArrayList<String> peakHours = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -435,6 +454,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting peak usage hours: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return peakHours;
@@ -445,6 +466,7 @@ public class ReportController {
 	 */
 	public ArrayList<String> getDailyStatistics() {
 		ArrayList<String> dailyStats = new ArrayList<>();
+		Connection conn = DBController.getInstance().getConnection();
 
 		String qry = """
 				SELECT
@@ -474,6 +496,8 @@ public class ReportController {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting daily statistics: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
 		}
 
 		return dailyStats;

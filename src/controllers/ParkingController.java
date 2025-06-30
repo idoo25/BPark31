@@ -21,115 +21,153 @@ import services.EmailService;
  */
 
 public class ParkingController {
-	  private int subscriberID;
-    private String firstName;
-    private String phoneNumber;
-    private String email;
-    private String carNumber;
-    private String subscriberCode;
-    private String userType;
-    protected Connection conn;
-    public int successFlag;
-    private static final int TOTAL_PARKING_SPOTS = 100;
-    private static final double RESERVATION_THRESHOLD = 0.4;
-    
-    
-    // Getters
-    public int getSubscriberID() { return subscriberID; }
-    public String getFirstName() { return firstName; }
-    public String getPhoneNumber() { return phoneNumber; }
-    public String getEmail() { return email; }
-    public String getCarNumber() { return carNumber; }
-    public String getSubscriberCode() { return subscriberCode; }
-    public String getUserType() { return userType; }
+	private int subscriberID;
+	private String firstName;
+	private String phoneNumber;
+	private String email;
+	private String carNumber;
+	private String subscriberCode;
+	private String userType;
+//    protected Connection conn;
+	public int successFlag;
+	private static final int TOTAL_PARKING_SPOTS = 100;
+	private static final double RESERVATION_THRESHOLD = 0.4;
 
-    // Setters
-    public void setSubscriberID(int subscriberID) { this.subscriberID = subscriberID; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    public void setEmail(String email) { this.email = email; }
-    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
-    public void setSubscriberCode(String subscriberCode) { this.subscriberCode = subscriberCode; }
-    public void setUserType(String userType) { this.userType = userType; }
+	// Getters
+	public int getSubscriberID() {
+		return subscriberID;
+	}
 
-    
-    /**
-     * Role-based access control for all parking operations
-     */
-    public enum UserRole {
-        SUBSCRIBER("sub"),
-        ATTENDANT("emp"), 
-        MANAGER("mng");
-        
-        private final String dbValue;
-        
-        UserRole(String dbValue) {
-            this.dbValue = dbValue;
-        }
-        
-        public String getDbValue() {
-            return dbValue;
-        }
-        
-        public static UserRole fromDbValue(String dbValue) {
-            for (UserRole role : values()) {
-                if (role.dbValue.equals(dbValue)) {
-                    return role;
-                }
-            }
-            return null;
-        }
-    }
+	public String getFirstName() {
+		return firstName;
+	}
 
-    /**
-     * Get user role from database
-     */
-    private UserRole getUserRole(String userName) {
-        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, userName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String userType = rs.getString("UserTypeEnum");
-                    return UserRole.fromDbValue(userType);
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error getting user role: " + e.getMessage());
-        }
-        return null;
-    }
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
 
-    /**
-     * Check if user has required role for operation
-     */
-    private boolean hasRole(String userName, UserRole requiredRole) {
-        UserRole userRole = getUserRole(userName);
-        return userRole == requiredRole;
-    }
+	public String getEmail() {
+		return email;
+	}
 
-    /**
-     * Check if user has any of the required roles
-     */
-    private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
-        UserRole userRole = getUserRole(userName);
-        if (userRole == null) return false;
-        
-        for (UserRole role : requiredRoles) {
-            if (userRole == role) return true;
-        }
-        return false;
-    }
-    
-    // Auto-cancellation service
-    private SimpleAutoCancellationService autoCancellationService;
+	public String getCarNumber() {
+		return carNumber;
+	}
 
+	public String getSubscriberCode() {
+		return subscriberCode;
+	}
 
+	public String getUserType() {
+		return userType;
+	}
 
-    public Connection getConnection() {
-        return conn;
-    }
+	// Setters
+	public void setSubscriberID(int subscriberID) {
+		this.subscriberID = subscriberID;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public void setCarNumber(String carNumber) {
+		this.carNumber = carNumber;
+	}
+
+	public void setSubscriberCode(String subscriberCode) {
+		this.subscriberCode = subscriberCode;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
+	}
+
+	/**
+	 * Role-based access control for all parking operations
+	 */
+	public enum UserRole {
+		SUBSCRIBER("sub"), ATTENDANT("emp"), MANAGER("mng");
+
+		private final String dbValue;
+
+		UserRole(String dbValue) {
+			this.dbValue = dbValue;
+		}
+
+		public String getDbValue() {
+			return dbValue;
+		}
+
+		public static UserRole fromDbValue(String dbValue) {
+			for (UserRole role : values()) {
+				if (role.dbValue.equals(dbValue)) {
+					return role;
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Get user role from database
+	 */
+	private UserRole getUserRole(String userName) {
+		String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, userName);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					String userType = rs.getString("UserTypeEnum");
+					return UserRole.fromDbValue(userType);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting user role: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return null;
+	}
+
+	/**
+	 * Check if user has required role for operation
+	 */
+	private boolean hasRole(String userName, UserRole requiredRole) {
+		UserRole userRole = getUserRole(userName);
+		return userRole == requiredRole;
+	}
+
+	/**
+	 * Check if user has any of the required roles
+	 */
+	private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
+		UserRole userRole = getUserRole(userName);
+		if (userRole == null)
+			return false;
+
+		for (UserRole role : requiredRoles) {
+			if (userRole == role)
+				return true;
+		}
+		return false;
+	}
+
+	// Auto-cancellation service
+	private SimpleAutoCancellationService autoCancellationService;
+
+//    public Connection getConnection() {
+//        return conn;
+//    }
 
 //    public void connectToDB(String path, String pass) {
 //        try {
@@ -151,314 +189,321 @@ public class ParkingController {
 //        }
 //    }
 
-    /**
-     * Start the automatic monitoring service (cancellations + late pickups)
-     */
-    public void startAutoCancellationService() {
-        if (autoCancellationService != null) {
-            autoCancellationService.startService();
-            System.out.println("✅ Auto-monitoring service started:");
-            System.out.println("   - Monitoring preorder reservations (auto-cancel after 15 min)");
-            System.out.println("   - Monitoring active parkings (notify late pickups after 15 min)");
-        }
-    }
+	/**
+	 * Start the automatic monitoring service (cancellations + late pickups)
+	 */
+	public void startAutoCancellationService() {
+		if (autoCancellationService != null) {
+			autoCancellationService.startService();
+			System.out.println("✅ Auto-monitoring service started:");
+			System.out.println("   - Monitoring preorder reservations (auto-cancel after 15 min)");
+			System.out.println("   - Monitoring active parkings (notify late pickups after 15 min)");
+		}
+	}
 
-    /**
-     * Stop the automatic monitoring service
-     */
-    public void stopAutoCancellationService() {
-        if (autoCancellationService != null) {
-            autoCancellationService.stopService();
-            System.out.println("⛔ Auto-monitoring service stopped");
-        }
-    }
+	/**
+	 * Stop the automatic monitoring service
+	 */
+	public void stopAutoCancellationService() {
+		if (autoCancellationService != null) {
+			autoCancellationService.stopService();
+			System.out.println("⛔ Auto-monitoring service stopped");
+		}
+	}
 
-    /**
-     * Cleanup method - call when shutting down the controller
-     */
-    public void shutdown() {
-        if (autoCancellationService != null) {
-            autoCancellationService.shutdown();
-        }
-    }
+	/**
+	 * Cleanup method - call when shutting down the controller
+	 */
+	public void shutdown() {
+		if (autoCancellationService != null) {
+			autoCancellationService.shutdown();
+		}
+	}
 
-    // ========== ALL YOUR EXISTING METHODS UPDATED ==========
-    
-    public String checkLogin(String userName, String userCode) {
-        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ? AND User_ID = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, userName);
-            stmt.setString(2, userCode);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("UserTypeEnum");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking login: " + e.getMessage());
-        }
-        return "None";
-    }
+	// ========== ALL YOUR EXISTING METHODS UPDATED ==========
 
-    /**
-     * Gets user information by userName
-     */
-    public ParkingSubscriber getUserInfo(String userName) {
-        String qry = "SELECT * FROM users WHERE UserName = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, userName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    ParkingSubscriber user = new ParkingSubscriber();
-                    user.setSubscriberID(rs.getInt("User_ID"));
-                    user.setFirstName(rs.getString("Name"));
-                    user.setPhoneNumber(rs.getString("Phone"));
-                    user.setEmail(rs.getString("Email"));
-                    user.setCarNumber(rs.getString("CarNum"));
-                    user.setSubscriberCode(userName);
-                    user.setUserType(rs.getString("UserTypeEnum"));
-                    return user;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error getting user info: " + e.getMessage());
-        }
-        return null;
-    }
+	public String checkLogin(String userName, String userCode) {
+		String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ? AND User_ID = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, userName);
+			stmt.setString(2, userCode);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("UserTypeEnum");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error checking login: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return "None";
+	}
 
+	/**
+	 * Gets user information by userName
+	 */
+	public ParkingSubscriber getUserInfo(String userName) {
+		String qry = "SELECT * FROM users WHERE UserName = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, userName);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					ParkingSubscriber user = new ParkingSubscriber();
+					user.setSubscriberID(rs.getInt("User_ID"));
+					user.setFirstName(rs.getString("Name"));
+					user.setPhoneNumber(rs.getString("Phone"));
+					user.setEmail(rs.getString("Email"));
+					user.setCarNumber(rs.getString("CarNum"));
+					user.setSubscriberCode(userName);
+					user.setUserType(rs.getString("UserTypeEnum"));
+					return user;
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting user info: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return null;
+	}
 
-    /**
-     * Checks if reservation is possible (40% of spots must be available)
-     */
-    public boolean canMakeReservation() {
-        int availableSpots = getAvailableParkingSpots();
-        return availableSpots >= (TOTAL_PARKING_SPOTS * RESERVATION_THRESHOLD);
-    }
+	/**
+	 * Checks if reservation is possible (40% of spots must be available)
+	 */
+	public boolean canMakeReservation() {
+		int availableSpots = getAvailableParkingSpots();
+		return availableSpots >= (TOTAL_PARKING_SPOTS * RESERVATION_THRESHOLD);
+	}
 
-    /**
- * Makes a parking reservation with specific DATE and TIME
- * FIXED: Now properly checks for time conflicts to prevent double-booking
- */
-public String makeReservation(String userName, String reservationDateTimeStr) {
-    // Check if reservation is possible (40% rule)
-    if (!canMakeReservation()) {
-        return "Not enough available spots for reservation (need 40% available)";
-    }
+	/**
+	 * Makes a parking reservation with specific DATE and TIME FIXED: Now properly
+	 * checks for time conflicts to prevent double-booking
+	 */
+	public String makeReservation(String userName, String reservationDateTimeStr) {
+		// Check if reservation is possible (40% rule)
+		if (!canMakeReservation()) {
+			return "Not enough available spots for reservation (need 40% available)";
+		}
+		Connection conn = DBController.getInstance().getConnection();
+		try {
+			// Parse the datetime string
+			LocalDateTime reservationDateTime = parseDateTime(reservationDateTimeStr);
 
-    try {
-        // Parse the datetime string
-        LocalDateTime reservationDateTime = parseDateTime(reservationDateTimeStr);
-        
-        // Validate reservation is within allowed time range (24 hours to 7 days)
-        LocalDateTime now = LocalDateTime.now();
-        if (reservationDateTime.isBefore(now.plusHours(24))) {
-            return "Reservation must be at least 24 hours in advance";
-        }
-        if (reservationDateTime.isAfter(now.plusDays(7))) {
-            return "Reservation cannot be more than 7 days in advance";
-        }
+			// Validate reservation is within allowed time range (24 hours to 7 days)
+			LocalDateTime now = LocalDateTime.now();
+			if (reservationDateTime.isBefore(now.plusHours(24))) {
+				return "Reservation must be at least 24 hours in advance";
+			}
+			if (reservationDateTime.isAfter(now.plusDays(7))) {
+				return "Reservation cannot be more than 7 days in advance";
+			}
 
-        // Get user ID
-        int userID = getUserID(userName);
-        if (userID == -1) {
-            return "User not found";
-        }
+			// Get user ID
+			int userID = getUserID(userName);
+			if (userID == -1) {
+				return "User not found";
+			}
 
-        // Calculate end time (default 4 hours)
-        LocalDateTime estimatedEndTime = reservationDateTime.plusHours(4);
+			// Calculate end time (default 4 hours)
+			LocalDateTime estimatedEndTime = reservationDateTime.plusHours(4);
 
-        // CRITICAL FIX: Use findAvailableSpotForTimeSlot instead of getAvailableParkingSpotID
-        int parkingSpotID = findAvailableSpotForTimeSlot(reservationDateTime, estimatedEndTime);
-        if (parkingSpotID == -1) {
-            return "No parking spots available for the requested time slot";
-        }
+			// CRITICAL FIX: Use findAvailableSpotForTimeSlot instead of
+			// getAvailableParkingSpotID
+			int parkingSpotID = findAvailableSpotForTimeSlot(reservationDateTime, estimatedEndTime);
+			if (parkingSpotID == -1) {
+				return "No parking spots available for the requested time slot";
+			}
 
-        // Create reservation in parkinginfo table with statusEnum='preorder'
-        String qry = """
-            INSERT INTO parkinginfo 
-            (ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Estimated_start_time, 
-             Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum) 
-            VALUES (?, ?, NOW(), ?, ?, 'yes', 'no', 'no', 'preorder')
-            """;
-        
-        try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, parkingSpotID);
-            stmt.setInt(2, userID);
-            stmt.setTimestamp(3, Timestamp.valueOf(reservationDateTime));
-            stmt.setTimestamp(4, Timestamp.valueOf(estimatedEndTime));
-            stmt.executeUpdate();
-            
-            // Get the generated ParkingInfo_ID (this is our reservation code)
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    int reservationCode = generatedKeys.getInt(1);
-                    System.out.println("New preorder reservation created: " + reservationCode + 
-                                     " for " + reservationDateTime + " (15-min auto-cancel rule applies)");
-                    
-                    // Send email confirmation
-                    ParkingSubscriber user = getUserInfo(userName);
-                    if (user != null && user.getEmail() != null) {
-                        String formattedDateTime = reservationDateTime.format(
-                            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-                        EmailService.sendReservationConfirmation(
-                            user.getEmail(), user.getFirstName(), 
-                            String.valueOf(reservationCode), formattedDateTime, "Spot " + parkingSpotID
-                        );
-                    }
-                    
-                    return "Reservation confirmed for " + reservationDateTime.format(
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + 
-                        ". Confirmation code: " + reservationCode + ". Spot: " + parkingSpotID;
-                }
-            }
-        }
-    } catch (Exception e) {
-        System.out.println("Error making reservation: " + e.getMessage());
-        return "Reservation failed: " + e.getMessage();
-    }
-    return "Reservation failed";
-}
+			// Create reservation in parkinginfo table with statusEnum='preorder'
+			String qry = """
+					INSERT INTO parkinginfo
+					(ParkingSpot_ID, User_ID, Date_Of_Placing_Order, Estimated_start_time,
+					 Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
+					VALUES (?, ?, NOW(), ?, ?, 'yes', 'no', 'no', 'preorder')
+					""";
 
+			try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
+				stmt.setInt(1, parkingSpotID);
+				stmt.setInt(2, userID);
+				stmt.setTimestamp(3, Timestamp.valueOf(reservationDateTime));
+				stmt.setTimestamp(4, Timestamp.valueOf(estimatedEndTime));
+				stmt.executeUpdate();
+
+				// Get the generated ParkingInfo_ID (this is our reservation code)
+				try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+					if (generatedKeys.next()) {
+						int reservationCode = generatedKeys.getInt(1);
+						System.out.println("New preorder reservation created: " + reservationCode + " for "
+								+ reservationDateTime + " (15-min auto-cancel rule applies)");
+
+						// Send email confirmation
+						ParkingSubscriber user = getUserInfo(userName);
+						if (user != null && user.getEmail() != null) {
+							String formattedDateTime = reservationDateTime
+									.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+							EmailService.sendReservationConfirmation(user.getEmail(), user.getFirstName(),
+									String.valueOf(reservationCode), formattedDateTime, "Spot " + parkingSpotID);
+						}
+
+						return "Reservation confirmed for "
+								+ reservationDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+								+ ". Confirmation code: " + reservationCode + ". Spot: " + parkingSpotID;
+					}
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Error making reservation: " + e.getMessage());
+			return "Reservation failed: " + e.getMessage();
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return "Reservation failed";
+	}
 
 	public ParkingController(String dbname, String pass) {
 		DBController.initializeConnection(dbname, pass);
 		successFlag = DBController.getInstance().getSuccessFlag();
-		conn = DBController.getInstance().getConnection();
+//		conn = DBController.getInstance().getConnection();
 
 	}
 
+	public String enterParking(int userID) {
+		// Check if user already has active parking
+		String checkActiveQry = "SELECT COUNT(*) FROM parkinginfo WHERE User_ID = ? AND statusEnum = 'active'";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement activeStmt = conn.prepareStatement(checkActiveQry)) {
+			activeStmt.setInt(1, userID);
+			try (ResultSet rs = activeStmt.executeQuery()) {
+				if (rs.next() && rs.getInt(1) > 0) {
+					return "You already have an active parking session.";
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error checking active parking: " + e.getMessage());
+			return "Could not verify active parking.";
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
 
+		// Check if parking is full
+		if (isParkingFull()) {
+			return "Parking is full. Try later.";
+		}
 
+		// Find first available parking spot
+		int spotID = getAvailableParkingSpotID();
+		if (spotID == -1) {
+			return "No parking spots available.";
+		}
 
-    public String enterParking(int userID) {
-        // Check if user already has active parking
-        String checkActiveQry = "SELECT COUNT(*) FROM parkinginfo WHERE User_ID = ? AND statusEnum = 'active'";
-        try (PreparedStatement activeStmt = conn.prepareStatement(checkActiveQry)) {
-            activeStmt.setInt(1, userID);
-            try (ResultSet rs = activeStmt.executeQuery()) {
-                if (rs.next() && rs.getInt(1) > 0) {
-                    return "You already have an active parking session.";
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking active parking: " + e.getMessage());
-            return "Could not verify active parking.";
-        }
+		// Insert new parking record
+		String insertQry = """
+				    INSERT INTO parkinginfo
+				    (ParkingSpot_ID, User_ID, Actual_start_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
+				    VALUES (?, ?, NOW(), 'no', 'no', 'no', 'active')
+				""";
+		conn = DBController.getInstance().getConnection();
+		try (PreparedStatement insertStmt = conn.prepareStatement(insertQry, PreparedStatement.RETURN_GENERATED_KEYS)) {
+			insertStmt.setInt(1, spotID);
+			insertStmt.setInt(2, userID);
+			insertStmt.executeUpdate();
 
-        // Check if parking is full
-        if (isParkingFull()) {
-            return "Parking is full. Try later.";
-        }
+			try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+				if (generatedKeys.next()) {
+					int parkingCode = generatedKeys.getInt(1);
 
-        // Find first available parking spot
-        int spotID = getAvailableParkingSpotID();
-        if (spotID == -1) {
-            return "No parking spots available.";
-        }
+					// Mark spot as occupied
+					updateParkingSpotStatus(spotID, true);
 
-        // Insert new parking record
-        String insertQry = """
-            INSERT INTO parkinginfo 
-            (ParkingSpot_ID, User_ID, Actual_start_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
-            VALUES (?, ?, NOW(), 'no', 'no', 'no', 'active')
-        """;
+					return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
+				} else {
+					return "Entry failed: No parking code generated.";
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error handling entry: " + e.getMessage());
+			return "Entry failed due to database error.";
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+	}
 
-        try (PreparedStatement insertStmt = conn.prepareStatement(insertQry, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            insertStmt.setInt(1, spotID);
-            insertStmt.setInt(2, userID);
-            insertStmt.executeUpdate();
+	/**
+	 * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
+	 */
+	public String enterParkingWithReservation(int reservationCode) {
+		String checkQry = """
+				SELECT pi.*, u.User_ID,
+				       TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) as minutes_since_start
+				FROM parkinginfo pi
+				JOIN users u ON pi.User_ID = u.User_ID
+				WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'preorder'
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
+			stmt.setInt(1, reservationCode);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					int minutesSinceStart = rs.getInt("minutes_since_start");
+					int parkingSpotID = rs.getInt("ParkingSpot_ID");
 
-            try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    int parkingCode = generatedKeys.getInt(1);
+					LocalDateTime estimatedStartTime = rs.getTimestamp("Estimated_start_time").toLocalDateTime();
+					LocalDateTime now = LocalDateTime.now();
 
-                    // Mark spot as occupied
-                    updateParkingSpotStatus(spotID, true);
+					// Check if it's today
+					if (!estimatedStartTime.toLocalDate().equals(now.toLocalDate())) {
+						if (estimatedStartTime.isBefore(now)) {
+							// Expired reservation
+							cancelReservation(reservationCode);
+							return "Reservation expired (wrong date).";
+						} else {
+							return "Reservation is for a future date.";
+						}
+					}
 
-                    return "Entry successful. Parking code: " + parkingCode + ". Spot: " + spotID;
-                } else {
-                    return "Entry failed: No parking code generated.";
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error handling entry: " + e.getMessage());
-            return "Entry failed due to database error.";
-        }
-    }
-    
-    /**
-     * Handles parking entry with reservation code - NOW SUPPORTS PREORDER->ACTIVE
-     */
-    public String enterParkingWithReservation(int reservationCode) {
-        String checkQry = """
-            SELECT pi.*, u.User_ID,
-                   TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) as minutes_since_start
-            FROM parkinginfo pi
-            JOIN users u ON pi.User_ID = u.User_ID
-            WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'preorder'
-            """;
+					// Check if within 15 min after reserved time
+					if (minutesSinceStart > 15) {
+						cancelReservation(reservationCode);
+						return "Reservation expired: arrived more than 15 min late.";
+					}
 
-        try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
-            stmt.setInt(1, reservationCode);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int minutesSinceStart = rs.getInt("minutes_since_start");
-                    int parkingSpotID = rs.getInt("ParkingSpot_ID");
+					// Update reservation to active and set actual start time
+					String updateQry = """
+							UPDATE parkinginfo
+							SET statusEnum = 'active', Actual_start_time = NOW()
+							WHERE ParkingInfo_ID = ?
+							""";
 
-                    LocalDateTime estimatedStartTime = rs.getTimestamp("Estimated_start_time").toLocalDateTime();
-                    LocalDateTime now = LocalDateTime.now();
+					try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
+						updateStmt.setInt(1, reservationCode);
+						updateStmt.executeUpdate();
 
-                    // Check if it's today
-                    if (!estimatedStartTime.toLocalDate().equals(now.toLocalDate())) {
-                        if (estimatedStartTime.isBefore(now)) {
-                            // Expired reservation
-                            cancelReservation(reservationCode);
-                            return "Reservation expired (wrong date).";
-                        } else {
-                            return "Reservation is for a future date.";
-                        }
-                    }
+						// Mark spot as occupied
+						updateParkingSpotStatus(parkingSpotID, true);
 
-                    // Check if within 15 min after reserved time
-                    if (minutesSinceStart > 15) {
-                        cancelReservation(reservationCode);
-                        return "Reservation expired: arrived more than 15 min late.";
-                    }
+						System.out.println("Reservation " + reservationCode + " activated (preorder → active)");
+						return "Entry successful! Reservation activated. Parking code: " + reservationCode + ". Spot: "
+								+ parkingSpotID;
+					}
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error handling reservation entry: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return "Invalid reservation code or reservation not in preorder status.";
+	}
 
-                    // Update reservation to active and set actual start time
-                    String updateQry = """
-                        UPDATE parkinginfo
-                        SET statusEnum = 'active', Actual_start_time = NOW()
-                        WHERE ParkingInfo_ID = ?
-                        """;
-
-                    try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
-                        updateStmt.setInt(1, reservationCode);
-                        updateStmt.executeUpdate();
-
-                        // Mark spot as occupied
-                        updateParkingSpotStatus(parkingSpotID, true);
-
-                        System.out.println("Reservation " + reservationCode + " activated (preorder → active)");
-                        return "Entry successful! Reservation activated. Parking code: " + reservationCode 
-                                + ". Spot: " + parkingSpotID;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error handling reservation entry: " + e.getMessage());
-        }
-        return "Invalid reservation code or reservation not in preorder status.";
-    }
-    
 	/**
 	 * Gets the number of available parking spots
 	 */
 	public int getAvailableParkingSpots() {
 		String qry = "SELECT COUNT(*) as available FROM ParkingSpot WHERE isOccupied = false";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			try (ResultSet rs = stmt.executeQuery()) {
 				if (rs.next()) {
@@ -467,47 +512,48 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spots: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return 0;
 	}
 
+	/**
+	 * Retrieves the active parking code for a user by their userID, sends an email
+	 * notification, and returns the code as a string.
+	 */
+	public String sendLostParkingCode(int userID) {
+		String qry = """
+				    SELECT pi.ParkingInfo_ID, u.Email, u.Phone, u.Name
+				    FROM parkinginfo pi
+				    JOIN users u ON pi.User_ID = u.User_ID
+				    WHERE u.User_ID = ? AND pi.statusEnum = 'active'
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setInt(1, userID);
 
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					int parkingCode = rs.getInt("ParkingInfo_ID");
+					String email = rs.getString("Email");
+					String phone = rs.getString("Phone");
+					String name = rs.getString("Name");
 
+					// Send recovery email
+					EmailService.sendParkingCodeRecovery(email, name, String.valueOf(parkingCode));
 
-    /**
-     * Retrieves the active parking code for a user by their userID,
-     * sends an email notification, and returns the code as a string.
-     */
-    public String sendLostParkingCode(int userID) {
-        String qry = """
-            SELECT pi.ParkingInfo_ID, u.Email, u.Phone, u.Name 
-            FROM parkinginfo pi 
-            JOIN users u ON pi.User_ID = u.User_ID 
-            WHERE u.User_ID = ? AND pi.statusEnum = 'active'
-        """;
+					return "Your active parking code is: " + parkingCode;
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error sending lost code: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
 
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setInt(1, userID);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int parkingCode = rs.getInt("ParkingInfo_ID");
-                    String email = rs.getString("Email");
-                    String phone = rs.getString("Phone");
-                    String name = rs.getString("Name");
-
-                    // Send recovery email
-                    EmailService.sendParkingCodeRecovery(email, name, String.valueOf(parkingCode));
-
-                    return "Your active parking code is: " + parkingCode;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error sending lost code: " + e.getMessage());
-        }
-
-        return "No active parking session found for this user.";
-    }
+		return "No active parking session found for this user.";
+	}
 
 	/**
 	 * ADD THIS NEW METHOD - Find an available spot for a specific time slot This
@@ -532,7 +578,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				ORDER BY ps.ParkingSpot_ID
 				LIMIT 1
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			// Set parameters for overlap check
 			stmt.setTimestamp(1, Timestamp.valueOf(endTime)); // existing end > new start
@@ -550,6 +596,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error finding available spot for time slot: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		System.out.println("No available spots for time slot " + startTime + " to " + endTime);
@@ -591,7 +639,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				    )
 				)
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setTimestamp(1, Timestamp.valueOf(endTime));
 			stmt.setTimestamp(2, Timestamp.valueOf(startTime));
@@ -605,6 +653,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spots for time slot: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return 0;
 	}
@@ -665,7 +715,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				 Estimated_start_time, Estimated_end_time, IsOrderedEnum, IsLate, IsExtended, statusEnum)
 				VALUES (?, ?, NOW(), ?, ?, ?, 'no', 'no', 'no', 'active')
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry, PreparedStatement.RETURN_GENERATED_KEYS)) {
 			stmt.setInt(1, spotID);
 			stmt.setInt(2, userID);
@@ -688,10 +738,11 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		} catch (SQLException e) {
 			System.out.println("Error handling entry: " + e.getMessage());
 			return "Entry failed";
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return "Entry failed";
 	}
-
 
 	/**
 	 * ATTENDANT-ONLY: Register new subscriber (PDF requirement) Only attendants can
@@ -737,7 +788,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 
 		// Check if username already exists
 		String checkQry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement checkStmt = conn.prepareStatement(checkQry)) {
 			checkStmt.setString(1, userName);
 			try (ResultSet rs = checkStmt.executeQuery()) {
@@ -748,11 +799,13 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		} catch (SQLException e) {
 			System.out.println("Error checking username: " + e.getMessage());
 			return "Error checking username availability";
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		// Insert new subscriber
 		String insertQry = "INSERT INTO users (UserName, Name, Phone, Email, CarNum, UserTypeEnum) VALUES (?, ?, ?, ?, ?, 'sub')";
-
+		conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(insertQry, PreparedStatement.RETURN_GENERATED_KEYS)) {
 			stmt.setString(1, userName);
 			stmt.setString(2, name);
@@ -781,6 +834,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		} catch (SQLException e) {
 			System.out.println("Registration failed: " + e.getMessage());
 			return "Registration failed: " + e.getMessage();
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Registration failed: Unknown error";
@@ -814,6 +869,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	 * Handles parking exit - NOW SUPPORTS FINISHING RESERVATIONS
 	 */
 	public String exitParking(String parkingCodeStr) {
+		Connection conn = DBController.getInstance().getConnection();
+
 		try {
 			int parkingCode = Integer.parseInt(parkingCodeStr);
 			String qry = """
@@ -822,7 +879,6 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 					JOIN parkingspot ps ON pi.ParkingSpot_ID = ps.ParkingSpot_ID
 					WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
 					""";
-
 			try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 				stmt.setInt(1, parkingCode);
 				try (ResultSet rs = stmt.executeQuery()) {
@@ -869,6 +925,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			return "Invalid parking code format";
 		} catch (SQLException e) {
 			System.out.println("Error handling exit: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return "Invalid parking code or already exited";
 	}
@@ -943,7 +1001,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				JOIN users u ON pi.User_ID = u.User_ID
 				WHERE u.UserName = ? AND pi.statusEnum = 'active'
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setString(1, userName);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -961,6 +1019,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error sending lost code: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return "No active parking session found";
 	}
@@ -978,7 +1038,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				WHERE u.UserName = ?
 				ORDER BY pi.Date_Of_Placing_Order DESC
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setString(1, userName);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1013,6 +1073,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting parking history: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return history;
 	}
@@ -1030,7 +1092,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				WHERE pi.statusEnum = 'active'
 				ORDER BY pi.Actual_start_time
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			try (ResultSet rs = stmt.executeQuery()) {
 				while (rs.next()) {
@@ -1058,11 +1120,11 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting active parkings: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return activeParkings;
 	}
-
-
 
 	/**
 	 * Cancels a reservation
@@ -1077,7 +1139,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				""";
 		String userEmail = null;
 		String userName = null;
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
 			stmt.setInt(1, reservationCode);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1088,6 +1150,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting user info for cancellation: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		String qry = """
@@ -1095,7 +1159,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				SET statusEnum = 'cancelled'
 				WHERE ParkingInfo_ID = ? AND statusEnum IN ('preorder', 'active')
 				""";
-
+		conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setInt(1, reservationCode);
 			int rowsUpdated = stmt.executeUpdate();
@@ -1113,6 +1177,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error cancelling reservation: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return "Reservation not found or already cancelled/finished";
 	}
@@ -1128,6 +1194,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	 * Initializes parking spots if they don't exist
 	 */
 	public void initializeParkingSpots() {
+		Connection conn = DBController.getInstance().getConnection();
+
 		try {
 			// Check if spots already exist
 			String checkQry = "SELECT COUNT(*) FROM ParkingSpot";
@@ -1141,8 +1209,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 								insertStmt.executeUpdate();
 							}
 						}
-						System.out.println("Successfully initialized " + TOTAL_PARKING_SPOTS +
-								" parking spots with AUTO_INCREMENT");
+						System.out.println("Successfully initialized " + TOTAL_PARKING_SPOTS
+								+ " parking spots with AUTO_INCREMENT");
 					} else {
 						System.out.println("Parking spots already exist: " + rs.getInt(1) + " spots found");
 					}
@@ -1150,6 +1218,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error initializing parking spots: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1157,7 +1227,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 
 	private int getUserID(String userName) {
 		String qry = "SELECT User_ID FROM users WHERE UserName = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setString(1, userName);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1167,13 +1237,15 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting user ID: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return -1;
 	}
 
 	private int getAvailableParkingSpotID() {
 		String qry = "SELECT ParkingSpot_ID FROM ParkingSpot WHERE isOccupied = false LIMIT 1";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			try (ResultSet rs = stmt.executeQuery()) {
 				if (rs.next()) {
@@ -1182,13 +1254,15 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting available spot ID: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return -1;
 	}
 
 	private boolean isParkingSpotAvailable(int spotID) {
 		String qry = "SELECT isOccupied FROM ParkingSpot WHERE ParkingSpot_ID = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setInt(1, spotID);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1198,19 +1272,23 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking spot availability: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return false;
 	}
 
 	private void updateParkingSpotStatus(int spotID, boolean isOccupied) {
 		String qry = "UPDATE ParkingSpot SET isOccupied = ? WHERE ParkingSpot_ID = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setBoolean(1, isOccupied);
 			stmt.setInt(2, spotID);
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println("Error updating parking spot status: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
@@ -1219,7 +1297,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	 */
 	private void sendLateExitNotification(int userID) {
 		String qry = "SELECT Email, Phone, Name FROM users WHERE User_ID = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setInt(1, userID);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1234,12 +1312,14 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error sending late notification: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 	}
 
 	private boolean isUsernameAvailable(String userName) {
 		String checkQry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(checkQry)) {
 			stmt.setString(1, userName);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1249,6 +1329,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error checking username availability: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		return false;
@@ -1261,15 +1343,16 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				SET ps.isOccupied = FALSE
 				WHERE pi.ParkingInfo_ID = ?
 				""";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
 			stmt.setInt(1, reservationCode);
 			stmt.executeUpdate();
 		} catch (SQLException e) {
 			System.out.println("Error freeing spot for reservation: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 	}
-
 
 	/**
 	 * Cancel reservation
@@ -1294,7 +1377,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 		String userName = null;
 		String currentStatus = null;
 		Integer spotId = null;
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
 			stmt.setInt(1, reservationCode);
 			try (ResultSet rs = stmt.executeQuery()) {
@@ -1307,6 +1390,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error getting reservation info for cancellation: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		// Update reservation status to cancelled
@@ -1315,7 +1400,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 				SET statusEnum = 'cancelled'
 				WHERE ParkingInfo_ID = ? AND statusEnum IN ('preorder', 'active')
 				""";
-
+		conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
 			stmt.setInt(1, reservationCode);
 			int rowsUpdated = stmt.executeUpdate();
@@ -1337,6 +1422,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			}
 		} catch (SQLException e) {
 			System.out.println("Error cancelling reservation: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		return "Reservation not found or already cancelled/finished";
@@ -1345,6 +1432,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	public ParkingSubscriber getSubscriberByName(String name) {
 		ParkingSubscriber subscriber = null;
 		String query = "SELECT * FROM users WHERE Name = ?";
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(query)) {
 			stmt.setString(1, name);
 			ResultSet rs = stmt.executeQuery();
@@ -1356,6 +1444,8 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 			rs.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 		return subscriber;
 	}
@@ -1363,7 +1453,7 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 	public List<ParkingSubscriber> getAllSubscribers() {
 		List<ParkingSubscriber> list = new ArrayList<>();
 		String query = "SELECT * FROM users WHERE UserTypeEnum = 'sub'";
-
+		Connection conn = DBController.getInstance().getConnection();
 		try (PreparedStatement stmt = conn.prepareStatement(query); ResultSet rs = stmt.executeQuery()) {
 
 			while (rs.next()) {
@@ -1377,328 +1467,333 @@ public String makeReservation(String userName, String reservationDateTimeStr) {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
 		}
 
 		return list;
 	}
 
+	/**
+	 * Extends parking time
+	 */
+	public String extendParkingTime(String parkingCodeStr, int additionalHours) {
+		if (additionalHours < 1 || additionalHours > 4) {
+			return "Can only extend parking by 1–4 hours.";
+		}
+		Connection conn = DBController.getInstance().getConnection();
 
+		try {
+			int parkingCode = Integer.parseInt(parkingCodeStr);
 
+			// Get current parking info and user data
+			String getUserQry = """
+					    SELECT pi.*, u.Email, u.Name
+					    FROM parkinginfo pi
+					    JOIN users u ON pi.User_ID = u.User_ID
+					    WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
+					""";
+			try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
+				stmt.setInt(1, parkingCode);
 
+				try (ResultSet rs = stmt.executeQuery()) {
+					if (rs.next()) {
+						String isExtended = rs.getString("IsExtended");
 
+						// ❌ Block if already extended once
+						if ("yes".equalsIgnoreCase(isExtended)) {
+							return "Cannot extend again: You already extended this active parking session.";
+						}
 
+						Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
+						String userEmail = rs.getString("Email");
+						String userName = rs.getString("Name");
+						int parkingSpotId = rs.getInt("ParkingSpot_ID");
 
+						LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime()
+								.plusHours(additionalHours);
 
-    
+						// Check for conflicting reservation
+						String conflictCheckQry = """
+								    SELECT 1 FROM parkinginfo
+								    WHERE ParkingSpot_ID = ?
+								      AND statusEnum = 'preorder'
+								      AND Estimated_start_time > ?
+								      AND Estimated_start_time < ?
+								""";
 
+						try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
+							checkStmt.setInt(1, parkingSpotId);
+							checkStmt.setTimestamp(2, currentEstimatedEnd);
+							checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
 
- 
-    /**
-     * Extends parking time
-     */
-    public String extendParkingTime(String parkingCodeStr, int additionalHours) {
-        if (additionalHours < 1 || additionalHours > 4) {
-            return "Can only extend parking by 1–4 hours.";
-        }
+							try (ResultSet conflictRs = checkStmt.executeQuery()) {
+								if (conflictRs.next()) {
+									return "Cannot extend parking: A reservation is scheduled during the extension period.";
+								}
+							}
+						}
 
-        try {
-            int parkingCode = Integer.parseInt(parkingCodeStr);
+						// ✅ Update estimated end time and mark as extended
+						String updateQry = """
+								    UPDATE parkinginfo
+								    SET Estimated_end_time = ?, IsExtended = 'yes'
+								    WHERE ParkingInfo_ID = ?
+								""";
 
-            // Get current parking info and user data
-            String getUserQry = """
-                SELECT pi.*, u.Email, u.Name 
-                FROM parkinginfo pi 
-                JOIN users u ON pi.User_ID = u.User_ID 
-                WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
-            """;
+						try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
+							updateStmt.setTimestamp(1, Timestamp.valueOf(newEstimatedEnd));
+							updateStmt.setInt(2, parkingCode);
+							updateStmt.executeUpdate();
 
-            try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
-                stmt.setInt(1, parkingCode);
+							try {
+								if (userEmail != null && userName != null) {
+									EmailService.sendExtensionConfirmation(userEmail, userName, parkingCodeStr,
+											additionalHours, newEstimatedEnd.toString());
+								}
+							} catch (Exception e) {
+								System.out.println("Email sending failed: " + e.getMessage());
+							}
 
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        String isExtended = rs.getString("IsExtended");
+							return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
+						}
+					}
+				}
+			}
+		} catch (NumberFormatException e) {
+			return "Invalid parking code format.";
+		} catch (SQLException e) {
+			System.out.println("Error extending parking time: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
 
-                        // ❌ Block if already extended once
-                        if ("yes".equalsIgnoreCase(isExtended)) {
-                            return "Cannot extend again: You already extended this active parking session.";
-                        }
+		return "Invalid parking code or parking session not active.";
+	}
 
-                        Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
-                        String userEmail = rs.getString("Email");
-                        String userName = rs.getString("Name");
-                        int parkingSpotId = rs.getInt("ParkingSpot_ID");
+	/**
+	 * Updates subscriber information
+	 */
+	public String updateSubscriberInfo(String updateData) {
+		// Format: userName,phone,email,carNumber
+		String[] data = updateData.split(",", -1); // -1 keeps empty
+		if (data.length != 4) {
+			return "Invalid update data format";
+		}
 
-                        LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime().plusHours(additionalHours);
+		String userName = data[0];
+		String phone = data[1];
+		String email = data[2];
+		String carNumber = data[3];
 
-                        // Check for conflicting reservation
-                        String conflictCheckQry = """
-                            SELECT 1 FROM parkinginfo
-                            WHERE ParkingSpot_ID = ?
-                              AND statusEnum = 'preorder'
-                              AND Estimated_start_time > ?
-                              AND Estimated_start_time < ?
-                        """;
+		StringBuilder queryBuilder = new StringBuilder("UPDATE users SET ");
+		List<String> fields = new ArrayList<>();
+		List<String> values = new ArrayList<>();
 
-                        try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
-                            checkStmt.setInt(1, parkingSpotId);
-                            checkStmt.setTimestamp(2, currentEstimatedEnd);
-                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
+		if (!phone.isEmpty()) {
+			fields.add("Phone = ?");
+			values.add(phone);
+		}
+		if (!email.isEmpty()) {
+			fields.add("Email = ?");
+			values.add(email);
+		}
+		if (!carNumber.isEmpty()) {
+			fields.add("CarNum = ?");
+			values.add(carNumber);
+		}
 
-                            try (ResultSet conflictRs = checkStmt.executeQuery()) {
-                                if (conflictRs.next()) {
-                                    return "Cannot extend parking: A reservation is scheduled during the extension period.";
-                                }
-                            }
-                        }
+		if (fields.isEmpty()) {
+			return "No changes to update.";
+		}
 
-                        // ✅ Update estimated end time and mark as extended
-                        String updateQry = """
-                            UPDATE parkinginfo 
-                            SET Estimated_end_time = ?, IsExtended = 'yes' 
-                            WHERE ParkingInfo_ID = ?
-                        """;
+		queryBuilder.append(String.join(", ", fields));
+		queryBuilder.append(" WHERE UserName = ?");
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+			for (int i = 0; i < values.size(); i++) {
+				stmt.setString(i + 1, values.get(i));
+			}
+			stmt.setString(values.size() + 1, userName);
 
-                        try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
-                            updateStmt.setTimestamp(1, Timestamp.valueOf(newEstimatedEnd));
-                            updateStmt.setInt(2, parkingCode);
-                            updateStmt.executeUpdate();
+			int rowsUpdated = stmt.executeUpdate();
+			if (rowsUpdated > 0) {
+				return "Subscriber information updated successfully";
+			}
+		} catch (SQLException e) {
+			System.out.println("Error updating subscriber info: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
 
-                            try {
-                                if (userEmail != null && userName != null) {
-                                    EmailService.sendExtensionConfirmation(
-                                        userEmail, userName, parkingCodeStr,
-                                        additionalHours, newEstimatedEnd.toString()
-                                    );
-                                }
-                            } catch (Exception e) {
-                                System.out.println("Email sending failed: " + e.getMessage());
-                            }
+		return "Failed to update subscriber information";
+	}
 
-                            return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
-                        }
-                    }
-                }
-            }
-        } catch (NumberFormatException e) {
-            return "Invalid parking code format.";
-        } catch (SQLException e) {
-            System.out.println("Error extending parking time: " + e.getMessage());
-        }
+	/**
+	 * Checks whether a user with the given user ID exists in the database.
+	 *
+	 * @param userID The user ID to check for.
+	 * @return true if a user with the given ID exists; false otherwise.
+	 */
+	public boolean doesUserIDExist(int userID) {
+		String qry = "SELECT COUNT(*) FROM users WHERE User_ID = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setInt(1, userID);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt(1) > 0;
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error checking user ID: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return false;
+	}
 
-        return "Invalid parking code or parking session not active.";
-    }
+	/**
+	 * Checks whether a user with the given username exists in the database.
+	 *
+	 * @param username The username to check for.
+	 * @return true if the username exists; false otherwise.
+	 */
+	public boolean doesUsernameExist(String username) {
+		String qry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, username);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt(1) > 0;
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error checking username: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return false;
+	}
 
- 
+	public String getNameByUsernameAndUserID(String username, int userID) {
+		String qry = "SELECT Name FROM users WHERE UserName = ? AND User_ID = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setString(1, username);
+			stmt.setInt(2, userID);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					System.out.println(rs.getString("Name"));
+					return rs.getString("Name");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting name by username and userID: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return null;
+	}
 
-   
-    
-    /**
-     * Updates subscriber information
-     */
-public String updateSubscriberInfo(String updateData) {
-    // Format: userName,phone,email,carNumber
-    String[] data = updateData.split(",", -1); // -1 keeps empty
-    if (data.length != 4) {
-        return "Invalid update data format";
-    }
+	public String getNameByUserID(int userID) {
+		String qry = "SELECT Name FROM users WHERE User_ID = ?";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			stmt.setInt(1, userID);
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("Name");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error getting name by user ID: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return null;
+	}
 
-    String userName = data[0];
-    String phone = data[1];
-    String email = data[2];
-    String carNumber = data[3];
+	public boolean isParkingFull() {
+		String qry = "SELECT COUNT(*) FROM ParkingSpot WHERE isOccupied = false";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					int availableSpots = rs.getInt(1);
+					System.out.println("Available spots: " + availableSpots);
+					return availableSpots <= 0; // explicit: true if full
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error checking parking availability: " + e.getMessage());
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+		return true; // assume full on DB error
+	}
 
-    StringBuilder queryBuilder = new StringBuilder("UPDATE users SET ");
-    List<String> fields = new ArrayList<>();
-    List<String> values = new ArrayList<>();
+	/**
+	 * Handles car retrieval given a ParkingInfo_ID. It sets statusEnum to
+	 * 'retrieved', sets Actual_end_time to now, and frees up the parking spot
+	 * (isOccupied = 0).
+	 */
+	public String retrieveCarByCode(int parkingInfoID) {
+		System.out.println("[DEBUG] retrieveCarByCode called with ParkingInfo_ID: " + parkingInfoID);
 
-    if (!phone.isEmpty()) {
-        fields.add("Phone = ?");
-        values.add(phone);
-    }
-    if (!email.isEmpty()) {
-        fields.add("Email = ?");
-        values.add(email);
-    }
-    if (!carNumber.isEmpty()) {
-        fields.add("CarNum = ?");
-        values.add(carNumber);
-    }
+		String selectQry = """
+				    SELECT ParkingSpot_ID
+				    FROM parkinginfo
+				    WHERE ParkingInfo_ID = ? AND statusEnum = 'active'
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement selectStmt = conn.prepareStatement(selectQry)) {
+			selectStmt.setInt(1, parkingInfoID);
 
-    if (fields.isEmpty()) {
-        return "No changes to update.";
-    }
+			try (ResultSet rs = selectStmt.executeQuery()) {
+				if (rs.next()) {
+					int parkingSpotID = rs.getInt("ParkingSpot_ID");
+					System.out.println("[DEBUG] Found active parking: Spot ID = " + parkingSpotID);
 
-    queryBuilder.append(String.join(", ", fields));
-    queryBuilder.append(" WHERE UserName = ?");
+					// Update parkinginfo
+					String updateParkingInfo = """
+							    UPDATE parkinginfo
+							    SET Actual_end_time = NOW(), statusEnum = 'finished'
+							    WHERE ParkingInfo_ID = ?
+							""";
+					try (PreparedStatement updateInfoStmt = conn.prepareStatement(updateParkingInfo)) {
+						updateInfoStmt.setInt(1, parkingInfoID);
+						int rowsUpdated = updateInfoStmt.executeUpdate();
+						System.out.println("[DEBUG] Updated parkinginfo rows: " + rowsUpdated);
+					}
 
-    try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
-        for (int i = 0; i < values.size(); i++) {
-            stmt.setString(i + 1, values.get(i));
-        }
-        stmt.setString(values.size() + 1, userName);
+					// Update parking spot
+					String updateSpot = """
+							    UPDATE parkingspot
+							    SET isOccupied = 0
+							    WHERE ParkingSpot_ID = ?
+							""";
+					try (PreparedStatement updateSpotStmt = conn.prepareStatement(updateSpot)) {
+						updateSpotStmt.setInt(1, parkingSpotID);
+						int spotRows = updateSpotStmt.executeUpdate();
+						System.out.println("[DEBUG] Updated parkingspot rows: " + spotRows);
+					}
 
-        int rowsUpdated = stmt.executeUpdate();
-        if (rowsUpdated > 0) {
-            return "Subscriber information updated successfully";
-        }
-    } catch (SQLException e) {
-        System.out.println("Error updating subscriber info: " + e.getMessage());
-    }
+					return "Car retrieved successfully from spot " + parkingSpotID;
+				} else {
+					System.out.println("[DEBUG] No active parking found for ParkingInfo_ID: " + parkingInfoID);
+					return "No active parking session found for this code.";
+				}
+			}
 
-    return "Failed to update subscriber information";
-}
-
-    
-    /**
-     * Checks whether a user with the given user ID exists in the database.
-     *
-     * @param userID The user ID to check for.
-     * @return  true if a user with the given ID exists; false otherwise.
-     */
-    public boolean doesUserIDExist(int userID) {
-        String qry = "SELECT COUNT(*) FROM users WHERE User_ID = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setInt(1, userID);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking user ID: " + e.getMessage());
-        }
-        return false;
-    }
-
-    /**
-     * Checks whether a user with the given username exists in the database.
-     *
-     * @param username The username to check for.
-     * @return true if the username exists;  false otherwise.
-     */
-    public boolean doesUsernameExist(String username) {
-        String qry = "SELECT COUNT(*) FROM users WHERE UserName = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, username);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking username: " + e.getMessage());
-        }
-        return false;
-    }
-    
-    public String getNameByUsernameAndUserID(String username, int userID) {
-        String qry = "SELECT Name FROM users WHERE UserName = ? AND User_ID = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setString(1, username);
-            stmt.setInt(2, userID);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                	System.out.println(rs.getString("Name"));
-                    return rs.getString("Name");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error getting name by username and userID: " + e.getMessage());
-        }
-        return null;
-    }
-    
-    public String getNameByUserID(int userID) {
-        String qry = "SELECT Name FROM users WHERE User_ID = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            stmt.setInt(1, userID);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("Name");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error getting name by user ID: " + e.getMessage());
-        }
-        return null;
-    }
-    
-    public boolean isParkingFull() {
-        String qry = "SELECT COUNT(*) FROM ParkingSpot WHERE isOccupied = false";
-        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    int availableSpots = rs.getInt(1);
-                    System.out.println("Available spots: " + availableSpots);
-                    return availableSpots <= 0; // explicit: true if full
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Error checking parking availability: " + e.getMessage());
-        }
-        return true; // assume full on DB error
-    }
-    
-
-    /**
-     * Handles car retrieval given a ParkingInfo_ID.
-     * It sets statusEnum to 'retrieved', sets Actual_end_time to now,
-     * and frees up the parking spot (isOccupied = 0).
-     */
-    public String retrieveCarByCode(int parkingInfoID) {
-        System.out.println("[DEBUG] retrieveCarByCode called with ParkingInfo_ID: " + parkingInfoID);
-
-        String selectQry = """
-            SELECT ParkingSpot_ID
-            FROM parkinginfo
-            WHERE ParkingInfo_ID = ? AND statusEnum = 'active'
-        """;
-
-        try (PreparedStatement selectStmt = conn.prepareStatement(selectQry)) {
-            selectStmt.setInt(1, parkingInfoID);
-
-            try (ResultSet rs = selectStmt.executeQuery()) {
-                if (rs.next()) {
-                    int parkingSpotID = rs.getInt("ParkingSpot_ID");
-                    System.out.println("[DEBUG] Found active parking: Spot ID = " + parkingSpotID);
-
-                    // Update parkinginfo
-                    String updateParkingInfo = """
-                        UPDATE parkinginfo
-                        SET Actual_end_time = NOW(), statusEnum = 'finished'
-                        WHERE ParkingInfo_ID = ?
-                    """;
-                    try (PreparedStatement updateInfoStmt = conn.prepareStatement(updateParkingInfo)) {
-                        updateInfoStmt.setInt(1, parkingInfoID);
-                        int rowsUpdated = updateInfoStmt.executeUpdate();
-                        System.out.println("[DEBUG] Updated parkinginfo rows: " + rowsUpdated);
-                    }
-
-                    // Update parking spot
-                    String updateSpot = """
-                        UPDATE parkingspot
-                        SET isOccupied = 0
-                        WHERE ParkingSpot_ID = ?
-                    """;
-                    try (PreparedStatement updateSpotStmt = conn.prepareStatement(updateSpot)) {
-                        updateSpotStmt.setInt(1, parkingSpotID);
-                        int spotRows = updateSpotStmt.executeUpdate();
-                        System.out.println("[DEBUG] Updated parkingspot rows: " + spotRows);
-                    }
-
-                    return "Car retrieved successfully from spot " + parkingSpotID;
-                } else {
-                    System.out.println("[DEBUG] No active parking found for ParkingInfo_ID: " + parkingInfoID);
-                    return "No active parking session found for this code.";
-                }
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error retrieving car: " + e.getMessage());
-            e.printStackTrace();
-            return "Error retrieving car.";
-        }
-    }
+		} catch (SQLException e) {
+			System.out.println("Error retrieving car: " + e.getMessage());
+			e.printStackTrace();
+			return "Error retrieving car.";
+		}finally {
+		    DBController.getInstance().releaseConnection(conn);
+		}
+	}
 
 }
