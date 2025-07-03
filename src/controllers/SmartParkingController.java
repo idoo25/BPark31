@@ -27,7 +27,7 @@ import server.DBController;
 public class SmartParkingController {
     
     // Configuration constants
-    private static final int TOTAL_PARKING_SPOTS = 100;
+    private static final int TOTAL_PARKING_SPOTS = 10;
     private static final double AVAILABILITY_THRESHOLD = 0.4; // 40% rule
     private static final int PREFERRED_WINDOW_HOURS = 8;
     private static final int STANDARD_BOOKING_HOURS = 4;
@@ -911,7 +911,7 @@ public class SmartParkingController {
             
             return String.format("Smart Parking Status: %d total spots, %d occupied, %d available (%.1f%% available)",
                                totalSpots, occupiedSpots, availableSpots, 
-                               (double) availableSpots / totalSpots * 100);
+                               (double) availableSpots / totalSpots * 10);
                                
         } catch (Exception e) {
             return "Error getting system status: " + e.getMessage();

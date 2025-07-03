@@ -319,7 +319,11 @@ public class ClientMessageHandler {
 
     private static void handleExtendParkingResponse(Message message) {
         String response = (String) message.getContent();
-        if (response.contains("extended")) {
+
+        
+        // show popup as before
+        if (response.contains("Parking time extended")) {
+
             showAlert("Extension Successful", response);
             ExtendParkingController controller = BParkClientApp.getExtendParkingController();
             if (controller != null) {

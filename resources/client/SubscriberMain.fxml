@@ -48,21 +48,35 @@
          
          <Separator /> 
          
+         <Button text="Home"
+		        onAction="#handleGoHome"
+		        prefWidth="180"
+		        styleClass="menu-button" />
+         
           <Button fx:id="btnShowAvailableSpots"
         		 text="Show Available Spots"
         		 onAction="#handleShowAvailableSpots"
-       			 layoutX="20" layoutY="100"
+       			 layoutX="20" layoutY="10"
         		 prefWidth="200" />
          
-         <Button text="Make Reservation" 
+
+         <Button fx:id="btnEnterParking" text="Enter Parking Now" 
+                 onAction="#handleImmediateParking" 
+                 prefWidth="180" styleClass="menu-button" />
+         
+         <Button text="Exit Parking" 
+                 onAction="#showExitParkingView" 
+                 prefWidth="180" styleClass="menu-button" />
+         
+         <Button text="Reservation" 
                  onAction="#showReservationView" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Button text="Cancel Reservation" 
-                 onAction="#handleCancelReservation" 
+         <Button text="Activate Reservation" 
+                 onAction="#handleActivateReservation" 
                  prefWidth="180" styleClass="menu-button" />
          
-         <Separator />
+
          
          <Button fx:id="btnViewHistory" text="Parking History" 
                  onAction="#handleViewHistory" 
@@ -87,8 +101,8 @@
    
    <!-- Main Content Area -->
    <center>
-      <ScrollPane fitToWidth="true" fitToHeight="true">
-         <VBox fx:id="mainContent" spacing="20" style="-fx-background-color: #ECF0F1;">
+     <ScrollPane fitToWidth="true" fitToHeight="true">
+    <VBox fx:id="mainContent" spacing="20" style="-fx-background-color: #ECF0F1;">
             <padding>
                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
             </padding>
@@ -102,6 +116,10 @@
                </Label>
                <Label text="Select an action from the menu or use the quick actions below." />
             </VBox>
+
+            
+  
+
 
             <!-- Reservation Card -->
             <TitledPane text="Make Reservation" expanded="false">
@@ -150,6 +168,7 @@
                   <Button text="Load Full History" onAction="#handleViewHistory" />
                </VBox>
             </TitledPane>
+
             
          </VBox>
       </ScrollPane>

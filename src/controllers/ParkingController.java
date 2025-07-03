@@ -21,153 +21,117 @@ import services.EmailService;
  */
 
 public class ParkingController {
-	private int subscriberID;
-	private String firstName;
-	private String phoneNumber;
-	private String email;
-	private String carNumber;
-	private String subscriberCode;
-	private String userType;
-//    protected Connection conn;
-	public int successFlag;
-	private static final int TOTAL_PARKING_SPOTS = 100;
-	private static final double RESERVATION_THRESHOLD = 0.4;
 
-	// Getters
-	public int getSubscriberID() {
-		return subscriberID;
-	}
+	  private int subscriberID;
+    private String firstName;
+    private String phoneNumber;
+    private String email;
+    private String carNumber;
+    private String subscriberCode;
+    private String userType;
+    protected Connection conn;
+    public int successFlag;
+    private static final int TOTAL_PARKING_SPOTS = 10;
+    private static final double RESERVATION_THRESHOLD = 0.4;
+    
+    
+    // Getters
+    public int getSubscriberID() { return subscriberID; }
+    public String getFirstName() { return firstName; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public String getEmail() { return email; }
+    public String getCarNumber() { return carNumber; }
+    public String getSubscriberCode() { return subscriberCode; }
+    public String getUserType() { return userType; }
 
-	public String getFirstName() {
-		return firstName;
-	}
+    // Setters
+    public void setSubscriberID(int subscriberID) { this.subscriberID = subscriberID; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setEmail(String email) { this.email = email; }
+    public void setCarNumber(String carNumber) { this.carNumber = carNumber; }
+    public void setSubscriberCode(String subscriberCode) { this.subscriberCode = subscriberCode; }
+    public void setUserType(String userType) { this.userType = userType; }
 
-	public String getPhoneNumber() {
-		return phoneNumber;
-	}
+    
+    /**
+     * Role-based access control for all parking operations
+     */
+    public enum UserRole {
+        SUBSCRIBER("sub"),
+        ATTENDANT("emp"), 
+        MANAGER("mng");
+        
+        private final String dbValue;
+        
+        UserRole(String dbValue) {
+            this.dbValue = dbValue;
+        }
+        
+        public String getDbValue() {
+            return dbValue;
+        }
+        
+        public static UserRole fromDbValue(String dbValue) {
+            for (UserRole role : values()) {
+                if (role.dbValue.equals(dbValue)) {
+                    return role;
+                }
+            }
+            return null;
+        }
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    /**
+     * Get user role from database
+     */
+    private UserRole getUserRole(String userName) {
+        String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+            stmt.setString(1, userName);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String userType = rs.getString("UserTypeEnum");
+                    return UserRole.fromDbValue(userType);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting user role: " + e.getMessage());
+        }
+        return null;
+    }
 
-	public String getCarNumber() {
-		return carNumber;
-	}
+    /**
+     * Check if user has required role for operation
+     */
+    private boolean hasRole(String userName, UserRole requiredRole) {
+        UserRole userRole = getUserRole(userName);
+        return userRole == requiredRole;
+    }
 
-	public String getSubscriberCode() {
-		return subscriberCode;
-	}
+    /**
+     * Check if user has any of the required roles
+     */
+    private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
+        UserRole userRole = getUserRole(userName);
+        if (userRole == null) return false;
+        
+        for (UserRole role : requiredRoles) {
+            if (userRole == role) return true;
+        }
+        return false;
+    }
+    
+    // Auto-cancellation service
+    private SimpleAutoCancellationService autoCancellationService;
 
-	public String getUserType() {
-		return userType;
-	}
 
-	// Setters
-	public void setSubscriberID(int subscriberID) {
-		this.subscriberID = subscriberID;
-	}
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
+    public Connection getConnection() {
+        return conn;
+    }
 
-	public void setPhoneNumber(String phoneNumber) {
-		this.phoneNumber = phoneNumber;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public void setCarNumber(String carNumber) {
-		this.carNumber = carNumber;
-	}
-
-	public void setSubscriberCode(String subscriberCode) {
-		this.subscriberCode = subscriberCode;
-	}
-
-	public void setUserType(String userType) {
-		this.userType = userType;
-	}
-
-	/**
-	 * Role-based access control for all parking operations
-	 */
-	public enum UserRole {
-		SUBSCRIBER("sub"), ATTENDANT("emp"), MANAGER("mng");
-
-		private final String dbValue;
-
-		UserRole(String dbValue) {
-			this.dbValue = dbValue;
-		}
-
-		public String getDbValue() {
-			return dbValue;
-		}
-
-		public static UserRole fromDbValue(String dbValue) {
-			for (UserRole role : values()) {
-				if (role.dbValue.equals(dbValue)) {
-					return role;
-				}
-			}
-			return null;
-		}
-	}
-
-	/**
-	 * Get user role from database
-	 */
-	private UserRole getUserRole(String userName) {
-		String qry = "SELECT UserTypeEnum FROM users WHERE UserName = ?";
-		Connection conn = DBController.getInstance().getConnection();
-		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
-			stmt.setString(1, userName);
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					String userType = rs.getString("UserTypeEnum");
-					return UserRole.fromDbValue(userType);
-				}
-			}
-		} catch (SQLException e) {
-			System.out.println("Error getting user role: " + e.getMessage());
-		} finally {
-			DBController.getInstance().releaseConnection(conn);
-		}
-		return null;
-	}
-
-	/**
-	 * Check if user has required role for operation
-	 */
-	private boolean hasRole(String userName, UserRole requiredRole) {
-		UserRole userRole = getUserRole(userName);
-		return userRole == requiredRole;
-	}
-
-	/**
-	 * Check if user has any of the required roles
-	 */
-	private boolean hasAnyRole(String userName, UserRole... requiredRoles) {
-		UserRole userRole = getUserRole(userName);
-		if (userRole == null)
-			return false;
-
-		for (UserRole role : requiredRoles) {
-			if (userRole == role)
-				return true;
-		}
-		return false;
-	}
-
-	// Auto-cancellation service
-	private SimpleAutoCancellationService autoCancellationService;
-
-//    public Connection getConnection() {
-//        return conn;
-//    }
 
 //    public void connectToDB(String path, String pass) {
 //        try {
@@ -1653,6 +1617,168 @@ public class ParkingController {
 		return false;
 	}
 
+
+ 
+    /**
+     * Extends parking time
+     */
+    public String extendParkingTime(String parkingCodeStr, int additionalHours) {
+        if (additionalHours < 1 || additionalHours > 4) {
+            return "Can only extend parking by 1–4 hours.";
+        }
+
+        try {
+            int parkingCode = Integer.parseInt(parkingCodeStr);
+
+            // Get current parking info and user data
+            String getUserQry = """
+                SELECT pi.*, u.Email, u.Name 
+                FROM parkinginfo pi 
+                JOIN users u ON pi.User_ID = u.User_ID 
+                WHERE pi.ParkingInfo_ID = ? AND pi.statusEnum = 'active'
+            """;
+
+            try (PreparedStatement stmt = conn.prepareStatement(getUserQry)) {
+                stmt.setInt(1, parkingCode);
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        String isExtended = rs.getString("IsExtended");
+
+                        //  Block if already extended once
+                        if ("yes".equalsIgnoreCase(isExtended)) {
+                            return "Cannot extend again: You already extended this active parking session.";
+                        }
+
+                        Timestamp currentEstimatedEnd = rs.getTimestamp("Estimated_end_time");
+                        String userEmail = rs.getString("Email");
+                        String userName = rs.getString("Name");
+                        int parkingSpotId = rs.getInt("ParkingSpot_ID");
+
+                        LocalDateTime newEstimatedEnd = currentEstimatedEnd.toLocalDateTime().plusHours(additionalHours);
+
+                        // Check for conflicting reservation
+                        String conflictCheckQry = """
+                            SELECT 1 FROM parkinginfo
+                            WHERE ParkingSpot_ID = ?
+                              AND statusEnum = 'preorder'
+                              AND Estimated_start_time > ?
+                              AND Estimated_start_time < ?
+                        """;
+
+                        try (PreparedStatement checkStmt = conn.prepareStatement(conflictCheckQry)) {
+                            checkStmt.setInt(1, parkingSpotId);
+                            checkStmt.setTimestamp(2, currentEstimatedEnd);
+                            checkStmt.setTimestamp(3, Timestamp.valueOf(newEstimatedEnd));
+
+                            try (ResultSet conflictRs = checkStmt.executeQuery()) {
+                                if (conflictRs.next()) {
+                                    return "Cannot extend parking: A reservation is scheduled during the extension period.";
+                                }
+                            }
+                        }
+
+                        //  Update estimated end time and mark as extended
+                        String updateQry = """
+                            UPDATE parkinginfo 
+                            SET Estimated_end_time = ?, IsExtended = 'yes' 
+                            WHERE ParkingInfo_ID = ?
+                        """;
+
+                        try (PreparedStatement updateStmt = conn.prepareStatement(updateQry)) {
+                            updateStmt.setTimestamp(1, Timestamp.valueOf(newEstimatedEnd));
+                            updateStmt.setInt(2, parkingCode);
+                            updateStmt.executeUpdate();
+
+                            try {
+                                if (userEmail != null && userName != null) {
+                                    EmailService.sendExtensionConfirmation(
+                                        userEmail, userName, parkingCodeStr,
+                                        additionalHours, newEstimatedEnd.toString()
+                                    );
+                                }
+                            } catch (Exception e) {
+                                System.out.println("Email sending failed: " + e.getMessage());
+                            }
+
+                            return "Parking time extended by " + additionalHours + " hours until " + newEstimatedEnd;
+                        }
+                    }
+                }
+            }
+        } catch (NumberFormatException e) {
+            return "Invalid parking code format.";
+        } catch (SQLException e) {
+            System.out.println("Error extending parking time: " + e.getMessage());
+        }
+
+        return "Invalid parking code or parking session not active.";
+    }
+
+ 
+
+   
+    
+    /**
+     * Updates subscriber information
+     */
+    public String updateSubscriberInfo(String updateData) {
+        // Format: userName,phone,email
+        String[] data = updateData.split(",", -1); // -1 keeps empty values
+        if (data.length != 4) {
+            return "Invalid update data format";
+        }
+
+        String userName = data[0];
+        String phone = data[1];
+        String email = data[2];
+        String carNumber = data[3];
+
+        // Build the update query dynamically
+        StringBuilder queryBuilder = new StringBuilder("UPDATE users SET ");
+        List<String> fields = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+
+        if (!phone.isEmpty()) {
+            fields.add("Phone = ?");
+            values.add(phone);
+        }
+
+        if (!email.isEmpty()) {
+            fields.add("Email = ?");
+            values.add(email);
+        }
+        
+        if (!carNumber.isEmpty()) {
+            fields.add("CarNum = ?");
+            values.add(carNumber);
+        }
+
+        if (fields.isEmpty()) {
+            return "No changes to update.";
+        }
+
+        queryBuilder.append(String.join(", ", fields));
+        queryBuilder.append(" WHERE UserName = ?");
+
+        try (PreparedStatement stmt = conn.prepareStatement(queryBuilder.toString())) {
+            // Set the values for updated fields
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setString(i + 1, values.get(i));
+            }
+            stmt.setString(values.size() + 1, userName); // Set username as the last parameter
+
+            int rowsUpdated = stmt.executeUpdate();
+            if (rowsUpdated > 0) {
+                return "Subscriber information updated successfully";
+            }
+        } catch (SQLException e) {
+            System.out.println("Error updating subscriber info: " + e.getMessage());
+        }
+
+        return "Failed to update subscriber information";
+    }
+
 	/**
 	 * Checks whether a user with the given username exists in the database.
 	 *
@@ -1696,6 +1822,7 @@ public class ParkingController {
 		}
 		return null;
 	}
+
 
 	public String getNameByUserID(int userID) {
 		String qry = "SELECT Name FROM users WHERE User_ID = ?";
