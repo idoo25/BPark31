@@ -51,6 +51,10 @@ public class ManagerController implements Initializable {
 	private Label lblManagerInfo;
 	@FXML
 	private Label lblLastUpdate;
+	@FXML
+	private Label lbltotalusedreservation;
+	@FXML
+	private Label lblimidiateParkings;
 
 	@FXML
 	private TableView<ParkingSubscriber> tableSubscribers;
@@ -223,10 +227,6 @@ public class ManagerController implements Initializable {
 			lblManagerInfo.setText("Manager: " + BParkClientApp.getCurrentUser());
 		}
 
-		// Set static values
-		if (lblTotalSpots != null) {
-			lblTotalSpots.setText("10");
-		}
 		if (tableSubscribers != null) {
 			colSubName.setCellValueFactory(
 					cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFirstName()));
@@ -239,6 +239,7 @@ public class ManagerController implements Initializable {
 			colSubUsername.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(
 					cellData.getValue().getSubscriberCode()));
 		}
+
 	}
 
 	private void initializeCharts() {
@@ -390,6 +391,12 @@ public class ManagerController implements Initializable {
 	}
 
 	private void updateParkingTimeReport(ParkingReport report) {
+
+		lblTotalSpots.setText("10");
+		lblOccupied.setText(report.getOccupied() + "");
+		lblAvailable.setText(10 - report.getOccupied() + "");
+		lblReservations.setText(report.getpreOrderReservations() + "");
+
 		if (lblAvgDuration != null) {
 			lblAvgDuration.setText(report.getFormattedAverageParkingTime());
 		}

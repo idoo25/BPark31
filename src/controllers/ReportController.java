@@ -143,6 +143,7 @@ public class ReportController {
 		report.setCancelledReservations(getCancelledReservations());
 		report.getpreOrderReservations();
 		report.setpreOrderReservations(getPreOrderedReservations());
+		report.setOccupied(getOccupied());
 		return report;
 	}
 
@@ -751,6 +752,27 @@ public class ReportController {
 			DBController.getInstance().releaseConnection(conn);
 		}
 		return result;
+	}
+
+	private int getOccupied() {
+		String qry = """
+				    SELECT ParkingSpot_ID as cnt
+				    FROM parkingspot
+				    WHERE isOccupied = '1'
+				""";
+		Connection conn = DBController.getInstance().getConnection();
+		try (PreparedStatement stmt = conn.prepareStatement(qry)) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getInt("cnt");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Error: " + e.getMessage());
+		} finally {
+			DBController.getInstance().releaseConnection(conn);
+		}
+		return 0;
 	}
 
 }

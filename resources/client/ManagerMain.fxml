@@ -108,30 +108,25 @@
 
 						<!-- Charts Section -->
 						<HBox spacing="20">
-							<!-- Occupancy Chart -->
-							<VBox spacing="10"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 15;"
-								HBox.hgrow="ALWAYS">
-								<Label text="Hourly Occupancy"
-									style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-								<LineChart fx:id="occupancyChart" prefHeight="300"
-									animated="false">
-									<xAxis>
-										<CategoryAxis label="Hour" />
-									</xAxis>
-									<yAxis>
-										<NumberAxis label="Occupied Spots" />
-									</yAxis>
-								</LineChart>
-							</VBox>
 
 							<!-- Parking Types Pie Chart -->
-							<VBox spacing="10"
-								style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 15;">
-								<Label text="Parking Types"
-									style="-fx-font-size: 16px; -fx-font-weight: bold;" />
-								<PieChart fx:id="parkingTypesChart" prefWidth="300"
-									prefHeight="300" />
+							<VBox spacing="10" alignment="CENTER">
+								<padding>
+									<Insets top="15" right="15" bottom="15" left="15" />
+								</padding>
+
+
+								<Label
+									text="Parking Statistics: Immediate and Reserved Parkings"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+								<PieChart fx:id="chartExtensionsPercentage"
+									prefHeight="300" prefWidth="400" />
+								<Label fx:id="lblTotalExtensions"
+									text="Total Extensions: --"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
+								<Label fx:id="lblExtensionsPercent"
+									text="Percent Subscribers Who Extended Their Parking: --"
+									style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;" />
 							</VBox>
 						</HBox>
 

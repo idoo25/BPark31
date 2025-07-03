@@ -23,7 +23,7 @@ public class ParkingReport implements Serializable {
 	private int extensions;
 	private int minParkingTime;
 	private int maxParkingTime;
-
+	private int imidiateParkings;
 	// Subscriber Status Report fields
 	private int activeSubscribers;
 	private int totalOrders;
@@ -43,6 +43,7 @@ public class ParkingReport implements Serializable {
 	private int usedReservations;
 	private int preOrderReservations;
 	private int totalMonthHours;
+	private int occupied;
 
 	// Constructors
 	public ParkingReport() {
@@ -289,5 +290,20 @@ public class ParkingReport implements Serializable {
 		this.preOrderReservations = preOrderReservations;
 	}
 
+	public int getOccupied() {
+		return occupied;
+	}
+
+	public void setOccupied(int imidiateParkings) {
+		this.imidiateParkings = imidiateParkings;
+	}
+
+	public int getImidiateParkings() {
+		return occupied;
+	}
+
+	public void setImidiateParkings(int imidiateParkings) {
+		this.imidiateParkings = imidiateParkings;
+	}
 
 }
