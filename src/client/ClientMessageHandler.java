@@ -246,7 +246,13 @@ public class ClientMessageHandler {
     private static void handleReports(Message message) {
         ArrayList<ParkingReport> reports = (ArrayList<ParkingReport>) message.getContent();
         System.out.println("Received " + reports.size() + " reports");
+
+        ManagerController managerController = BParkClientApp.getManagerController();
+        if (managerController != null) {
+            managerController.updateReports(reports);
+        }
     }
+
 
     @SuppressWarnings("unchecked")
     private static void handleActiveParkings(Message message) {
