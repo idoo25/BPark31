@@ -409,7 +409,7 @@ public class ManagerController implements Initializable {
 		if (report.getHourlyDistribution() != null)
 			updateChartHourlyDistribution(report.getHourlyDistribution());
 
-		updateChartExtensionsPercentage(report.getExtensions(), report.getNoExtensions());
+		updateChartExtensionsPercentage(report.getExtensions(), report.getNoExtensions(), report.getTotalSubscribers());
 
 		if (report.getLateExitsByHour() != null)
 			updateChartLateExitsByHour(report.getLateExitsByHour());
@@ -667,7 +667,7 @@ public class ManagerController implements Initializable {
 		});
 	}
 
-	private void updateChartExtensionsPercentage(int extensions, int noExtensions) {
+	private void updateChartExtensionsPercentage(int extensions, int noExtensions, int totalSubscribers) {
 		Platform.runLater(() -> {
 			ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
 					new PieChart.Data("Extensions", extensions), new PieChart.Data("No Extensions", noExtensions));
@@ -675,7 +675,7 @@ public class ManagerController implements Initializable {
 			lblTotalExtensions.setText("Total Extensions: " + extensions);
 
 			int total = extensions + noExtensions;
-			double percent = (total == 0) ? 0 : (extensions * 100.0 / total);
+			double percent = (total == 0) ? 0 : (extensions * 100.0 / totalSubscribers);
 			lblExtensionsPercent
 					.setText(String.format("%.1f", percent) + "%" + " of Subscribers Extended Their Parking!");
 		});

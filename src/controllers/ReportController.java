@@ -672,7 +672,7 @@ public class ReportController {
 				    SELECT COUNT(*) as used_reservations
 				    FROM parkinginfo
 				    WHERE IsOrderedEnum = 'yes'
-				    AND statusEnum IN ('active', 'finished', 'preorder', 'canceled')
+				    AND statusEnum = 'finished'
 				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 				""";
 
@@ -702,7 +702,8 @@ public class ReportController {
 		String cancelledReservationsQry = """
 				    SELECT COUNT(*) as cancelled_reservations
 				    FROM parkinginfo
-				    WHERE statusEnum = 'cancelled'
+				    WHERE IsOrderedEnum = 'yes'
+				    AND statusEnum = 'cancelled'
 				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 				""";
 
@@ -720,11 +721,9 @@ public class ReportController {
 		} finally {
 			DBController.getInstance().releaseConnection(conn);
 		}
-		System.out.println(result);
 		return result;
 	}
-	
-	
+
 	public int getPreOrderedReservations() {
 		int result = 0; // cancelledReservations
 		Connection conn = DBController.getInstance().getConnection();
@@ -732,7 +731,8 @@ public class ReportController {
 		String cancelledReservationsQry = """
 				    SELECT COUNT(*) as cancelled_reservations
 				    FROM parkinginfo
-				    WHERE statusEnum = 'preorder'
+				    WHERE IsOrderedEnum = 'yes'
+				    AND statusEnum = 'preorder'
 				    AND Date_Of_Placing_Order >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
 				""";
 
@@ -750,7 +750,6 @@ public class ReportController {
 		} finally {
 			DBController.getInstance().releaseConnection(conn);
 		}
-		System.out.println(result);
 		return result;
 	}
 
