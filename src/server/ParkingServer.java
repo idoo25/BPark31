@@ -55,7 +55,7 @@ public class ParkingServer extends AbstractServer {
         connectionPoolTimer = Executors.newScheduledThreadPool(POOL_SIZE);
         connectionPoolTimer.scheduleAtFixedRate(() -> {
             synchronized (clientsMap) {
-                System.out.println("Connection Pool Status - Active connections: " + clientsMap.size());
+                System.out.println("Client Status - Active clients: " + clientsMap.size());
                 cleanupInactiveConnections();
             }
         }, 0, TIMER_INTERVAL, TimeUnit.SECONDS);
