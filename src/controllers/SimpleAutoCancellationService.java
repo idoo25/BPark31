@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import server.DBController;
 import services.EmailService;
 
 /**
@@ -96,8 +97,8 @@ public class SimpleAutoCancellationService {
             AND pi.Estimated_start_time IS NOT NULL
             AND TIMESTAMPDIFF(MINUTE, pi.Estimated_start_time, NOW()) >= ?
             """;
-        
-        try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        Connection conn = DBController.getInstance().getConnection();
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, LATE_THRESHOLD_MINUTES);
             
             try (ResultSet rs = stmt.executeQuery()) {
@@ -135,6 +136,8 @@ public class SimpleAutoCancellationService {
             }
         } catch (SQLException e) {
             System.err.println("Database error during auto-cancellation: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
@@ -162,8 +165,9 @@ public class SimpleAutoCancellationService {
             AND TIMESTAMPDIFF(MINUTE, pi.Estimated_end_time, NOW()) >= ?
             AND pi.IsLate = 'no'
             """;
-        
-        try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        Connection conn = DBController.getInstance().getConnection();
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, LATE_THRESHOLD_MINUTES);
             
             try (ResultSet rs = stmt.executeQuery()) {
@@ -196,6 +200,8 @@ public class SimpleAutoCancellationService {
             }
         } catch (SQLException e) {
             System.err.println("Database error during late pickup check: " + e.getMessage());
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
@@ -203,7 +209,7 @@ public class SimpleAutoCancellationService {
      * Mark parking as late and send email notification
      */
     private boolean markAsLateAndNotify(int parkingInfoId, String userEmail, String fullName) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
         
         try {
             // Update IsLate to 'yes'
@@ -231,14 +237,18 @@ public class SimpleAutoCancellationService {
         } catch (SQLException e) {
             System.err.println("Error marking parking as late: " + e.getMessage());
             return false;
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
+
     }
     
     /**
      * Cancel a specific late preorder reservation and free up the parking spot
      */
     private boolean cancelLateReservation(int reservationCode, int spotId) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
+
         
         try {
             conn.setAutoCommit(false);
@@ -289,7 +299,10 @@ public class SimpleAutoCancellationService {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.err.println("Failed to reset auto-commit: " + e.getMessage());
+            }finally {
+                DBController.getInstance().releaseConnection(conn);
             }
+
         }
     }
     
@@ -302,8 +315,9 @@ public class SimpleAutoCancellationService {
             SET statusEnum = 'active', Actual_start_time = NOW()
             WHERE ParkingInfo_ID = ? AND statusEnum = 'preorder'
             """;
-        
-        try (PreparedStatement stmt = parkingController.getConnection().prepareStatement(query)) {
+        Connection conn = DBController.getInstance().getConnection();
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, reservationCode);
             int updated = stmt.executeUpdate();
             
@@ -316,6 +330,8 @@ public class SimpleAutoCancellationService {
         } catch (SQLException e) {
             System.err.println("Error activating reservation: " + e.getMessage());
             return false;
+        }finally {
+            DBController.getInstance().releaseConnection(conn);
         }
     }
     
@@ -323,7 +339,8 @@ public class SimpleAutoCancellationService {
      * Finish a reservation (change from active to finished when customer exits)
      */
     public boolean finishReservation(int reservationCode, int spotId) {
-        Connection conn = parkingController.getConnection();
+    	Connection conn = DBController.getInstance().getConnection();
+
         
         try {
             conn.setAutoCommit(false);
@@ -375,7 +392,10 @@ public class SimpleAutoCancellationService {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.err.println("Failed to reset auto-commit: " + e.getMessage());
+            }finally {
+                DBController.getInstance().releaseConnection(conn);
             }
+
         }
     }
     

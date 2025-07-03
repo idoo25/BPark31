@@ -1,15 +1,17 @@
 package controllers;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
+
+
 import client.BParkClientApp;
 import entities.Message;
 import entities.Message.MessageType;
-import entities.ParkingSubscriber;
+import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 
-public class UpdateProfileController {
+public class UpdateProfileController{
 	
-	public static UpdateProfileController instance;
+public static UpdateProfileController instance;
     @FXML
     private TextField emailField;
 
@@ -80,3 +82,4 @@ public void setPhone(String phone) {
 
 
 }
+

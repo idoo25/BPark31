@@ -59,6 +59,7 @@
        			 layoutX="20" layoutY="10"
         		 prefWidth="200" />
          
+
          <Button fx:id="btnEnterParking" text="Enter Parking Now" 
                  onAction="#handleImmediateParking" 
                  prefWidth="180" styleClass="menu-button" />
@@ -75,6 +76,7 @@
                  onAction="#handleActivateReservation" 
                  prefWidth="180" styleClass="menu-button" />
          
+
          
          <Button fx:id="btnViewHistory" text="Parking History" 
                  onAction="#handleViewHistory" 
@@ -114,8 +116,59 @@
                </Label>
                <Label text="Select an action from the menu or use the quick actions below." />
             </VBox>
+
             
   
+
+
+            <!-- Reservation Card -->
+            <TitledPane text="Make Reservation" expanded="false">
+               <VBox spacing="10">
+                  <padding>
+                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                  </padding>
+                  
+                  <Label fx:id="lblReservationStatus" text="Select date and time for reservation:" />
+                  
+                  <HBox spacing="20">
+                     <VBox spacing="5">
+                        <Label text="Date:" />
+                        <DatePicker fx:id="datePickerReservation" />
+                     </VBox>
+                     
+                     <VBox spacing="5">
+                        <Label text="Time:" />
+                        <ComboBox fx:id="comboTimeSlot" prefWidth="150" promptText="Select time" />
+                     </VBox>
+                  </HBox>
+                  
+                  <Button text="Make Reservation" onAction="#handleMakeReservation" 
+                          styleClass="primary-button" />
+                  
+                  <Label text="* Reservations must be 24 hours to 7 days in advance" 
+                         styleClass="info-label" />
+                  <Label text="* Reservation requires at least 40% available spots" 
+                         styleClass="info-label" />
+               </VBox>
+            </TitledPane>
+            
+            <!-- Parking History Table -->
+            <TitledPane text="Recent Parking History" expanded="false">
+               <VBox spacing="10">
+                  <TableView fx:id="tableParkingHistory" prefHeight="200">
+                     <columns>
+                        <TableColumn fx:id="colDate" text="Date" prefWidth="100" />
+                        <TableColumn fx:id="colEntry" text="Entry Time" prefWidth="100" />
+                        <TableColumn fx:id="colExit" text="Exit Time" prefWidth="100" />
+                        <TableColumn fx:id="colSpot" text="Spot" prefWidth="80" />
+                        <TableColumn fx:id="colStatus" text="Status" prefWidth="100" />
+                     </columns>
+                  </TableView>
+                  
+                  <Button text="Load Full History" onAction="#handleViewHistory" />
+               </VBox>
+            </TitledPane>
+
             
          </VBox>
       </ScrollPane>
