@@ -58,19 +58,19 @@
 						<HBox spacing="20">
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
 								</padding>
 								<Label text="Total Spots" style="-fx-text-fill: #7F8C8D;" />
-								<Label fx:id="lblTotalSpots" text="100"
+								<Label fx:id="lblTotalSpots" text="10"
 									style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2C3E50;" />
 							</VBox>
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -82,7 +82,7 @@
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -94,7 +94,7 @@
 
 							<VBox spacing="5"
 								style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
-								alignment="CENTER" prefWidth="200" prefHeight="100">
+								alignment="CENTER" prefWidth="200" prefHeight="10">
 								<padding>
 									<Insets bottom="15.0" left="15.0" right="15.0"
 										top="15.0" />
@@ -268,7 +268,7 @@
 						VBox.vgrow="ALWAYS">
 						<columns>
 							<TableColumn fx:id="colParkingCode"
-								text="Parking Code" prefWidth="100" />
+								text="Parking Code" prefWidth="10" />
 							<TableColumn fx:id="colSubscriberName"
 								text="Subscriber" prefWidth="150" />
 							<TableColumn fx:id="colSpot" text="Spot"
@@ -336,7 +336,7 @@
 							</padding>
 
 							<HBox spacing="10" alignment="CENTER_LEFT">
-								<Label text="Status:" minWidth="100" />
+								<Label text="Status:" minWidth="10" />
 								<Label fx:id="lblAutoCancelStatus" text="Active"
 									style="-fx-text-fill: #27AE60; -fx-font-weight: bold;" />
 							</HBox>
@@ -355,9 +355,9 @@
 							</padding>
 
 							<HBox spacing="10" alignment="CENTER_LEFT">
-								<Label text="Select Month:" minWidth="100" />
+								<Label text="Select Month:" minWidth="10" />
 								<ComboBox fx:id="comboMonth" prefWidth="150" />
-								<ComboBox fx:id="comboYear" prefWidth="100" />
+								<ComboBox fx:id="comboYear" prefWidth="10" />
 								<Button text="Generate Monthly Reports"
 									onAction="#handleGenerateMonthlyReports" />
 							</HBox>

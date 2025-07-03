@@ -188,7 +188,7 @@ public class ManagerController implements Initializable {
 
 		// Set static values
 		if (lblTotalSpots != null) {
-			lblTotalSpots.setText("100");
+			lblTotalSpots.setText("10");
 		}
 		if (tableSubscribers != null) {
 			colSubName.setCellValueFactory(
@@ -229,7 +229,7 @@ public class ManagerController implements Initializable {
 
 	private void loadInitialData() {
 		// Load parking availability
-		//checkParkingStatus();
+		checkParkingStatus();
 
 		// Load initial reports
 		loadReports("ALL");
@@ -241,7 +241,7 @@ public class ManagerController implements Initializable {
 	private void startAutoRefresh() {
 		// Refresh dashboard every 30 seconds
 		refreshTimeline = new Timeline(new KeyFrame(Duration.seconds(30), event -> {
-			//checkParkingStatus();
+			checkParkingStatus();
 			updateLastRefreshTime();
 		}));
 		refreshTimeline.setCycleCount(Timeline.INDEFINITE);
@@ -309,7 +309,7 @@ public class ManagerController implements Initializable {
 
 	public void updateParkingStatus(int availableSpots) {
 		Platform.runLater(() -> {
-			int occupied = 100 - availableSpots;
+			int occupied = 10 - availableSpots;
 
 			if (lblOccupied != null) {
 				lblOccupied.setText(String.valueOf(occupied));

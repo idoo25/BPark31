@@ -33,7 +33,7 @@ public class ParkingController {
     private String userType;
     protected Connection conn;
     public int successFlag;
-    private static final int TOTAL_PARKING_SPOTS = 100;
+    private static final int TOTAL_PARKING_SPOTS = 10;
     private static final double RESERVATION_THRESHOLD = 0.4;
     
     

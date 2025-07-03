@@ -168,21 +168,21 @@ public class ParkingReport implements Serializable {
 
     public double getLateExitPercentage() {
         if (totalParkings > 0) {
-            return (double) lateExits / totalParkings * 100;
+            return (double) lateExits / totalParkings * 10;
         }
         return 0.0;
     }
 
     public double getExtensionPercentage() {
         if (totalParkings > 0) {
-            return (double) extensions / totalParkings * 100;
+            return (double) extensions / totalParkings * 10;
         }
         return 0.0;
     }
 
     public double getReservationPercentage() {
         if (totalOrders > 0) {
-            return (double) reservations / totalOrders * 100;
+            return (double) reservations / totalOrders * 10;
         }
         return 0.0;
     }

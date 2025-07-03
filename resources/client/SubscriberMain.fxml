@@ -56,7 +56,7 @@
           <Button fx:id="btnShowAvailableSpots"
         		 text="Show Available Spots"
         		 onAction="#handleShowAvailableSpots"
-       			 layoutX="20" layoutY="100"
+       			 layoutX="20" layoutY="10"
         		 prefWidth="200" />
          
          <Button fx:id="btnEnterParking" text="Enter Parking Now" 

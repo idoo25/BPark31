@@ -355,7 +355,7 @@ public class SubscriberController implements Initializable {
             lblAvailableSpots.setText("Available Spots: " + spots);
             
             // Update UI based on availability
-            boolean canReserve = spots >= (100 * 0.4); // 40% rule
+            boolean canReserve = spots >= (10 * 0.4); // 40% rule
             if (btnMakeReservation != null) {
                 btnMakeReservation.setDisable(!canReserve);
             }
