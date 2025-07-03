@@ -329,8 +329,8 @@ public class ManagerController implements Initializable {
 
 	@FXML
 	private void checkParkingStatus() {
-		Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
-		BParkClientApp.sendMessage(msg);
+//		Message msg = new Message(MessageType.CHECK_PARKING_AVAILABILITY, null);
+//		BParkClientApp.sendMessage(msg);
 
 		// Also get active parkings for statistics
 		Message activeMsg = new Message(MessageType.GET_ACTIVE_PARKINGS, null);
