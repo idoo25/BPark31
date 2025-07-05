@@ -13,28 +13,61 @@ import client.BParkClientApp;
 import entities.Message;
 import entities.Message.MessageType;
 
+
+/**
+ * Controller for managing the login process in the BPark client application.
+ * <p>
+ * Handles input validation, server connection, and communication for subscriber login.
+ * It also responds to login success/failure and configures keyboard behavior.
+ * <p>
+ * Implements {@link Initializable} to set up the login form after loading the FXML.
+ */
 public class LoginController implements Initializable {
     
+	/** Text field for entering the subscriber's username. */
     @FXML private TextField txtUsername;
+    
+    /** Text field for entering the subscriber's user code */
     @FXML private TextField txtUsercode;
+    /** Text field for entering the server's IP address. */
     @FXML private TextField txtServerIP;
+    /** Button that triggers the login process. */
     @FXML private Button btnLogin;
+    /** Label used to display status message. */
     @FXML private Label lblStatus;
     
+    
+    /** Flag to indicate whether a connection attempt is in progress. */
     private boolean isConnecting = false;
+    /** Static reference to the controller instance for global access. */
     private static LoginController instance;
     
+    
+    /**
+     * Constructor that assigns this object to the static {@code instance} field.
+     * Useful for accessing the controller from other parts of the application.
+     */
     public LoginController() {
         instance = this;
     }
     
+    /**
+     * Gets the current instance of the LoginController.
+     *
+     * @return the singleton- instance of this controller.
+     */
 	public static LoginController getInstance() {
 		return instance;
 	}
 	
-	/**
-	 * Initializes the login screen: connects to the server, sets default values, and configures user input behavior.
-	 */
+	  /**
+     * Initializes the login screen UI elements and attempts server connection.
+     * <p>
+     * Sets default values, adds keyboard shortcuts, and focuses the username field.
+     *
+     * @param location  The location used to resolve relative paths for the root object, or {@code null} if unknown.
+     * @param resources The resources used to localize the root object, or {@code null} if none.
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
     	 // If the client is a user - connect to the server
@@ -53,6 +86,12 @@ public class LoginController implements Initializable {
 	   	 Platform.runLater(() -> txtUsername.requestFocus());
     }
     
+    
+    /**
+     * Sends a request to the server to check parking availability.
+     * <p>
+     * Triggered from the login screen for convenience or user feedback.
+     */
     @FXML
     private void handleCheckAvailability() {
         // Send a request to the server 
@@ -61,6 +100,13 @@ public class LoginController implements Initializable {
         
     }
     
+    
+    /**
+     * Handles the logic for logging into the system.
+     * <p>
+     * Validates user inputs, attempts server connection, and sends a login request.
+     * Prevents multiple simultaneous login attempts using the {@code isConnecting} flag.
+     */
     @FXML
     private void handleLogin() {
         if (isConnecting) {
@@ -97,7 +143,7 @@ public class LoginController implements Initializable {
         lblStatus.setText("Connecting to server...");
         lblStatus.setStyle("-fx-text-fill: #3498DB;");
         
-        // Store server IP and connect
+        // Store server IP and connect to server
         BParkClientApp.setServerIP(serverIP);
         
         // Connect to server in background thread
@@ -129,7 +175,11 @@ public class LoginController implements Initializable {
     }
     
     /**
-     * Handle Enter key press for quick login
+     * Triggered when the Enter key is pressed in the username or user code fields.
+     * <p>
+     * Allows quick login by pressing Enter instead of clicking the login button.
+     *
+     * @param event The key event triggered by the user.
      */
     private void handleEnterKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
@@ -137,8 +187,13 @@ public class LoginController implements Initializable {
         }
     }
     
+    
     /**
-     * Called when login fails
+     * Handles server response when login fails.
+     * <p>
+     * Displays an error message and resets the login button and focus state.
+     *
+     * @param reason A message explaining the reason for login failure.
      */
     public void handleLoginFailed(String reason) {
         Platform.runLater(() -> {
@@ -149,8 +204,13 @@ public class LoginController implements Initializable {
         });
     }
     
+    
     /**
-     * Called when login succeeds
+     * Handles server response when login is successful.
+     * <p>
+     * Displays a success message and closes the login window.
+     *
+     * @param userType The type of user logged in (e.g., subscriber, attendant).
      */
     public void handleLoginSuccess(String userType) {
         Platform.runLater(() -> {
@@ -163,7 +223,7 @@ public class LoginController implements Initializable {
     }
     
     /**
-     * Reset login button state
+     * Resets the login button state after a failed login attempt or cancellation.
      */
     private void resetLoginButton() {
         isConnecting = false;
@@ -172,7 +232,9 @@ public class LoginController implements Initializable {
     }
     
     /**
-     * Show error message
+     * Displays an error message in the status label with red text styling.
+     *
+     * @param message The message to display to the user.
      */
     private void showError(String message) {
         lblStatus.setText(message);
