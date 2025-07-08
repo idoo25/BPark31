@@ -142,7 +142,6 @@ public class BParkClientApp extends BParkBaseApp {
         // Clean up when application closes
         super.stop();
     }
-    }
     
     public static void main(String[] args) {
         launch(args);
