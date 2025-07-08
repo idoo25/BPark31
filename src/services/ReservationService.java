@@ -91,7 +91,7 @@ public class ReservationService {
                         if (subscriber != null) {
                             NotificationService.getInstance().sendReservationConfirmation(
                                 subscriber.getEmail(), 
-                                subscriber.getName(), 
+                                subscriber.getFirstName(), 
                                 code,
                                 parkingDate.toString(),
                                 startTime.toString(),
@@ -437,23 +437,26 @@ public class ReservationService {
      * @throws SQLException if database error occurs
      */
     private ParkingOrder createParkingOrderFromResultSet(ResultSet rs) throws SQLException {
-        return new ParkingOrder(
-            rs.getInt("ParkingInfo_ID"),
-            rs.getInt("User_ID"),
-            rs.getString("Name"),
-            rs.getString("Email"),
-            rs.getString("Phone"),
-            rs.getString("CarNum"),
-            rs.getInt("ParkingSpot_ID"),
-            rs.getDate("Date"),
-            rs.getTime("Start_time"),
-            rs.getTime("Estimated_end_time"),
-            rs.getTimestamp("Entry_time"),
-            rs.getTimestamp("Actual_end_time"),
-            rs.getInt("Code"),
-            rs.getString("statusEnum"),
-            rs.getString("ReservationType"),
-            rs.getString("IsExtended")
-        );
+        ParkingOrder order = new ParkingOrder();
+        order.setOrderID(rs.getInt("ParkingInfo_ID"));
+        order.setParkingCode(String.valueOf(rs.getInt("Code")));
+        order.setSubscriberName(rs.getString("Name"));
+        order.setOrderType(rs.getString("ReservationType"));
+        order.setSpotNumber("Spot " + rs.getInt("ParkingSpot_ID"));
+        order.setStatus(rs.getString("statusEnum"));
+        order.setExtended("yes".equals(rs.getString("IsExtended")));
+        
+        // Convert Timestamps to LocalDateTime
+        if (rs.getTimestamp("Entry_time") != null) {
+            order.setEntryTime(rs.getTimestamp("Entry_time").toLocalDateTime());
+        }
+        if (rs.getTimestamp("Actual_end_time") != null) {
+            order.setExitTime(rs.getTimestamp("Actual_end_time").toLocalDateTime());
+        }
+        if (rs.getTimestamp("Estimated_end_time") != null) {
+            order.setExpectedExitTime(rs.getTimestamp("Estimated_end_time").toLocalDateTime());
+        }
+        
+        return order;
     }
 }

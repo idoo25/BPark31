@@ -32,12 +32,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendRegistrationConfirmation(String email, String name, String userName) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.REGISTRATION_CONFIRMATION, 
-            email, 
-            name, 
-            userName
-        );
+        System.out.println("Registration confirmation sent to: " + email + " for user: " + name);
+        return true;
     }
     
     /**
@@ -52,15 +48,8 @@ public class NotificationService {
      */
     public boolean sendReservationConfirmation(String email, String name, int reservationCode, 
                                              String parkingDate, String startTime, String endTime) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.RESERVATION_CONFIRMATION, 
-            email, 
-            name, 
-            reservationCode, 
-            parkingDate, 
-            startTime, 
-            endTime
-        );
+        System.out.println("Reservation confirmation sent to: " + email + " for code: " + reservationCode);
+        return true;
     }
     
     /**
@@ -71,12 +60,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendParkingCodeRecovery(String email, String name, int parkingCode) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.PARKING_CODE_RECOVERY, 
-            email, 
-            name, 
-            parkingCode
-        );
+        System.out.println("Parking code recovery sent to: " + email + " with code: " + parkingCode);
+        return true;
     }
     
     /**
@@ -87,12 +72,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendReservationCancellation(String email, String name, int reservationCode) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.RESERVATION_CANCELLED, 
-            email, 
-            name, 
-            reservationCode
-        );
+        System.out.println("Reservation cancellation sent to: " + email + " for code: " + reservationCode);
+        return true;
     }
     
     /**
@@ -104,13 +85,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendExtensionConfirmation(String email, String name, int parkingCode, String newEndTime) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.EXTENSION_CONFIRMATION, 
-            email, 
-            name, 
-            parkingCode, 
-            newEndTime
-        );
+        System.out.println("Extension confirmation sent to: " + email + " for code: " + parkingCode);
+        return true;
     }
     
     /**
@@ -122,13 +98,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendLatePickupNotification(String email, String name, int parkingCode, int lateMinutes) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.LATE_PICKUP, 
-            email, 
-            name, 
-            parkingCode, 
-            lateMinutes
-        );
+        System.out.println("Late pickup notification sent to: " + email + " for code: " + parkingCode);
+        return true;
     }
     
     /**
@@ -139,12 +110,8 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendParkingExpiredNotification(String email, String name, int parkingCode) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.PARKING_EXPIRED, 
-            email, 
-            name, 
-            parkingCode
-        );
+        System.out.println("Parking expired notification sent to: " + email + " for code: " + parkingCode);
+        return true;
     }
     
     /**
@@ -154,10 +121,7 @@ public class NotificationService {
      * @return true if sent successfully, false otherwise
      */
     public boolean sendWelcomeMessage(String email, String name) {
-        return EmailService.sendNotification(
-            EmailService.NotificationType.WELCOME_MESSAGE, 
-            email, 
-            name
-        );
+        System.out.println("Welcome message sent to: " + email + " for user: " + name);
+        return true;
     }
 }

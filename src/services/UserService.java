@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import entities.ParkingSubscriber;
 import server.DBController;
+import services.ValidationService;
+import services.NotificationService;
 
 /**
  * UserService handles all user-related operations following Single Responsibility Principle.

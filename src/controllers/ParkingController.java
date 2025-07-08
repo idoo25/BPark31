@@ -17,6 +17,7 @@ import services.ParkingSpotService;
 import services.ReservationService;
 import services.ValidationService;
 import services.NotificationService;
+import controllers.SimpleAutoCancellationService;
 
 /**
  * ParkingController handles parking operations coordination.
@@ -33,7 +34,7 @@ public class ParkingController {
      * Initializes the parking controller.
      */
     public ParkingController() {
-        autoCancellationService = new SimpleAutoCancellationService();
+        autoCancellationService = new SimpleAutoCancellationService(this);
         ParkingSpotService.getInstance().initializeParkingSpots();
     }
 

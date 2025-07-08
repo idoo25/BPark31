@@ -35,7 +35,7 @@ public class ServerUI extends Application {
             System.out.println("ERROR - Could not parse port number!");
         }
 
-        ParkingServer sv = new ParkingServer(port);
+        ParkingServer sv = ParkingServer.getInstance(port);
 
         try {
             sv.listen();
