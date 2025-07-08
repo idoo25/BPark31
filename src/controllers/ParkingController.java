@@ -29,6 +29,7 @@ public class ParkingController {
     private static final double RESERVATION_THRESHOLD = 0.4;
     
     private SimpleAutoCancellationService autoCancellationService;
+    public int successFlag;
     
     /**
      * Initializes the parking controller.
@@ -36,6 +37,19 @@ public class ParkingController {
     public ParkingController() {
         autoCancellationService = new SimpleAutoCancellationService(this);
         ParkingSpotService.getInstance().initializeParkingSpots();
+        successFlag = 1;
+    }
+    
+    /**
+     * Initializes the parking controller with database connection.
+     * @param dbname Database name
+     * @param pass Database password
+     */
+    public ParkingController(String dbname, String pass) {
+        DBController.initializeConnection(dbname, pass);
+        autoCancellationService = new SimpleAutoCancellationService(this);
+        ParkingSpotService.getInstance().initializeParkingSpots();
+        successFlag = 1;
     }
 
     /**
@@ -355,6 +369,83 @@ public class ParkingController {
     private boolean hasRole(String userName, UserRole requiredRole) {
         UserRole userRole = getUserRole(userName);
         return userRole == requiredRole;
+    }
+
+    /**
+     * Gets user name by username and user ID.
+     * @param userName Username to search for
+     * @param userID User ID to match
+     * @return User's full name or null if not found
+     */
+    public String getNameByUsernameAndUserID(String userName, int userID) {
+        return UserService.getInstance().getNameByUsernameAndUserID(userName, userID);
+    }
+    
+    /**
+     * Gets user name by user ID.
+     * @param userID User ID to search for
+     * @return User's full name or null if not found
+     */
+    public String getNameByUserID(int userID) {
+        return UserService.getInstance().getNameByUserID(userID);
+    }
+    
+    /**
+     * Gets all subscribers in the system.
+     * @return List of all parking subscribers
+     */
+    public ArrayList<ParkingSubscriber> getAllSubscribers() {
+        return UserService.getInstance().getAllSubscribers();
+    }
+    
+    /**
+     * Initializes parking spots in the database.
+     */
+    public void initializeParkingSpots() {
+        ParkingSpotService.getInstance().initializeParkingSpots();
+    }
+    
+    /**
+     * Enters parking with an existing reservation.
+     * @param reservationID Reservation ID to activate
+     * @return Success message or error description
+     */
+    public String enterParkingWithReservation(int reservationID) {
+        return ReservationService.getInstance().enterParkingWithReservation(reservationID);
+    }
+    
+    /**
+     * Extends parking time for an active session.
+     * @param parkingCodeStr Parking code as string
+     * @param additionalHours Hours to extend
+     * @return Success message or error description
+     */
+    public String extendParkingTime(String parkingCodeStr, int additionalHours) {
+        return requestParkingExtension(parkingCodeStr, additionalHours);
+    }
+    
+    /**
+     * Sends lost parking code to user email (by user ID).
+     * @param userID User ID requesting lost code
+     * @return Success message or error description
+     */
+    public String sendLostParkingCode(int userID) {
+        return UserService.getInstance().sendLostParkingCodeByUserID(userID);
+    }
+    
+    /**
+     * Registers a new subscriber (overloaded with 6 parameters).
+     * @param attendantUserName Username of attendant registering subscriber
+     * @param name Full name
+     * @param phone Phone number
+     * @param email Email address
+     * @param carNumber Car license number
+     * @param userName Username
+     * @return Success message or error description
+     */
+    public String registerNewSubscriber(String attendantUserName, String name, String phone, String email, String carNumber, String userName) {
+        // Delegate to the 5-parameter version, ignoring attendant for now
+        return registerNewSubscriber(name, phone, email, carNumber, userName);
     }
 
     /**

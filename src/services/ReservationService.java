@@ -459,4 +459,51 @@ public class ReservationService {
         
         return order;
     }
+    
+    /**
+     * Enters parking with an existing reservation.
+     * @param reservationID Reservation ID to activate
+     * @return Success message or error description
+     */
+    public String enterParkingWithReservation(int reservationID) {
+        Connection conn = DBController.getInstance().getConnection();
+        
+        // First check if reservation exists and is in preorder status
+        String checkQuery = "SELECT * FROM parkinginfo WHERE ParkingInfo_ID = ? AND statusEnum = 'preorder'";
+        
+        try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
+            checkStmt.setInt(1, reservationID);
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (!rs.next()) {
+                    return "Reservation not found or already activated";
+                }
+                
+                // Update reservation to active status
+                String updateQuery = """
+                        UPDATE parkinginfo 
+                        SET statusEnum = 'active', Entry_time = CURRENT_TIMESTAMP, Code = ?
+                        WHERE ParkingInfo_ID = ?
+                        """;
+                
+                int parkingCode = generateParkingCode();
+                
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+                    updateStmt.setInt(1, parkingCode);
+                    updateStmt.setInt(2, reservationID);
+                    
+                    int updatedRows = updateStmt.executeUpdate();
+                    if (updatedRows > 0) {
+                        return "Reservation activated successfully. Your parking code is: " + parkingCode;
+                    } else {
+                        return "Failed to activate reservation";
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error activating reservation: " + e.getMessage());
+            return "Error activating reservation: " + e.getMessage();
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+    }
 }

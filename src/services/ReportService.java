@@ -289,4 +289,72 @@ public class ReportService {
         
         return hourlyData;
     }
+    
+    /**
+     * Generates monthly reports for specified month/year.
+     * @param monthYear Month and year string (e.g., "2024-01")
+     * @return ArrayList of monthly parking reports
+     */
+    public ArrayList<ParkingReport> generateMonthlyReports(String monthYear) {
+        ArrayList<ParkingReport> monthlyReports = new ArrayList<>();
+        Connection conn = DBController.getInstance().getConnection();
+        
+        // Parse month-year and create date range
+        String[] parts = monthYear.split("-");
+        if (parts.length != 2) {
+            System.err.println("Invalid month-year format. Expected: YYYY-MM");
+            return monthlyReports;
+        }
+        
+        String year = parts[0];
+        String month = parts[1];
+        
+        String query = """
+                SELECT 
+                    DAY(Entry_time) as day_of_month,
+                    COUNT(*) as total_parkings,
+                    COUNT(CASE WHEN ReservationType = 'preorder' THEN 1 END) as reservations,
+                    COUNT(CASE WHEN ReservationType = 'spontaneous' THEN 1 END) as spontaneous,
+                    AVG(TIMESTAMPDIFF(HOUR, Entry_time, Actual_end_time)) as avg_duration_hours
+                FROM parkinginfo 
+                WHERE YEAR(Entry_time) = ? AND MONTH(Entry_time) = ?
+                AND Entry_time IS NOT NULL
+                GROUP BY DAY(Entry_time)
+                ORDER BY day_of_month
+                """;
+        
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, year);
+            stmt.setString(2, month);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ParkingReport report = new ParkingReport();
+                    
+                    int dayOfMonth = rs.getInt("day_of_month");
+                    int totalParkings = rs.getInt("total_parkings");
+                    int reservations = rs.getInt("reservations");
+                    int spontaneous = rs.getInt("spontaneous");
+                    double avgDuration = rs.getDouble("avg_duration_hours");
+                    
+                    String reportDate = String.format("%s-%s-%02d", year, month, dayOfMonth);
+                    
+                    report.setReportTitle("Daily Report for " + reportDate);
+                    report.setReportDate(reportDate);
+                    report.setTotalOrders(totalParkings);
+                    report.setReservationCount(reservations);
+                    report.setSpontaneousCount(spontaneous);
+                    report.setAverageParkingDuration(avgDuration);
+                    
+                    monthlyReports.add(report);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error generating monthly reports: " + e.getMessage());
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+        
+        return monthlyReports;
+    }
 }
