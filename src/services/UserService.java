@@ -214,4 +214,116 @@ public class UserService {
             rs.getString("UserTypeEnum")
         );
     }
+    
+    /**
+     * Gets user name by username and user ID.
+     * @param userName Username to search for
+     * @param userID User ID to match
+     * @return User's full name or null if not found
+     */
+    public String getNameByUsernameAndUserID(String userName, int userID) {
+        Connection conn = DBController.getInstance().getConnection();
+        String query = "SELECT Name FROM users WHERE UserName = ? AND User_ID = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, userName);
+            stmt.setInt(2, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Name");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting name by username and userID: " + e.getMessage());
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Gets user name by user ID.
+     * @param userID User ID to search for
+     * @return User's full name or null if not found
+     */
+    public String getNameByUserID(int userID) {
+        Connection conn = DBController.getInstance().getConnection();
+        String query = "SELECT Name FROM users WHERE User_ID = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Name");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting name by userID: " + e.getMessage());
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Gets all subscribers in the system.
+     * @return ArrayList of all parking subscribers
+     */
+    public ArrayList<ParkingSubscriber> getAllSubscribers() {
+        ArrayList<ParkingSubscriber> subscribers = new ArrayList<>();
+        Connection conn = DBController.getInstance().getConnection();
+        String query = "SELECT * FROM users WHERE UserTypeEnum = 'sub' ORDER BY Name";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ParkingSubscriber subscriber = createSubscriberFromResultSet(rs);
+                    subscribers.add(subscriber);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting all subscribers: " + e.getMessage());
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+        
+        return subscribers;
+    }
+    
+    /**
+     * Sends lost parking code to user email by user ID.
+     * @param userID User ID requesting lost code
+     * @return Success message or error description
+     */
+    public String sendLostParkingCodeByUserID(int userID) {
+        Connection conn = DBController.getInstance().getConnection();
+        String query = """
+                SELECT pi.Code, u.Email, u.Name
+                FROM parkinginfo pi
+                JOIN users u ON pi.User_ID = u.User_ID
+                WHERE u.User_ID = ? AND pi.statusEnum = 'active' AND pi.Actual_end_time IS NULL
+                """;
+        
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userID);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int parkingCode = rs.getInt("Code");
+                    String email = rs.getString("Email");
+                    String name = rs.getString("Name");
+                    
+                    NotificationService.getInstance().sendParkingCodeRecovery(email, name, parkingCode);
+                    return "Parking code sent to your email";
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error sending lost code by userID: " + e.getMessage());
+        } finally {
+            DBController.getInstance().releaseConnection(conn);
+        }
+        
+        return "No active parking session found";
+    }
 }

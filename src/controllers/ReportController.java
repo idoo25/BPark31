@@ -65,4 +65,13 @@ public class ReportController {
     public TreeMap<String, Integer> getPeakHourAnalysis() {
         return ReportService.getInstance().getPeakHourAnalysis();
     }
+    
+    /**
+     * Generates monthly reports for specified month/year.
+     * @param monthYear Month and year string (e.g., "2024-01")
+     * @return ArrayList of monthly parking reports
+     */
+    public ArrayList<ParkingReport> generateMonthlyReports(String monthYear) {
+        return ReportService.getInstance().generateMonthlyReports(monthYear);
+    }
 }

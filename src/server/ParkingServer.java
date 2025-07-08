@@ -32,7 +32,7 @@ import serverGUI.ServerPortFrame;
  */
 public class ParkingServer extends AbstractServer {
 
-    private static final Integer DEFAULT_PORT = 5555;
+    public static final Integer DEFAULT_PORT = 5555;
     private static ParkingServer instance;
     
     public static ParkingController parkingController;
@@ -40,7 +40,7 @@ public class ParkingServer extends AbstractServer {
     public static ServerPortFrame spf;
 
     private final Map<ConnectionToClient, String> clientsMap = new HashMap<>();
-    private static String serverIp;
+    public static String serverIp;
 
     private ScheduledExecutorService connectionPoolTimer;
     private static final int POOL_SIZE = 5;
