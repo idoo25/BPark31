@@ -340,7 +340,7 @@ public class ReportService {
                     String reportDate = String.format("%s-%s-%02d", year, month, dayOfMonth);
                     
                     report.setReportTitle("Daily Report for " + reportDate);
-                    report.setReportDate(reportDate);
+                    report.setReportDate(LocalDate.parse(reportDate));
                     report.setTotalOrders(totalParkings);
                     report.setReservationCount(reservations);
                     report.setSpontaneousCount(spontaneous);
