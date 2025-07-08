@@ -44,6 +44,12 @@ public class ParkingReport implements Serializable {
 	private int preOrderReservations;
 	private int totalMonthHours;
 	private int occupied;
+	
+	// Additional fields for report generation
+	private String reportTitle;
+	private int reservationCount;
+	private int spontaneousCount;
+	private double averageParkingDuration;
 
 	// Constructors
 	public ParkingReport() {
@@ -304,6 +310,39 @@ public class ParkingReport implements Serializable {
 
 	public void setImidiateParkings(int imidiateParkings) {
 		this.imidiateParkings = imidiateParkings;
+	}
+
+	// Getters and setters for additional fields
+	public String getReportTitle() {
+		return reportTitle;
+	}
+
+	public void setReportTitle(String reportTitle) {
+		this.reportTitle = reportTitle;
+	}
+
+	public int getReservationCount() {
+		return reservationCount;
+	}
+
+	public void setReservationCount(int reservationCount) {
+		this.reservationCount = reservationCount;
+	}
+
+	public int getSpontaneousCount() {
+		return spontaneousCount;
+	}
+
+	public void setSpontaneousCount(int spontaneousCount) {
+		this.spontaneousCount = spontaneousCount;
+	}
+
+	public double getAverageParkingDuration() {
+		return averageParkingDuration;
+	}
+
+	public void setAverageParkingDuration(double averageParkingDuration) {
+		this.averageParkingDuration = averageParkingDuration;
 	}
 
 }
