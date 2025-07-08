@@ -11,7 +11,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import server.DBController;
-import services.EmailService;
 
 /**
  * Enhanced Automatic Service for:
@@ -117,7 +116,7 @@ public class SimpleAutoCancellationService {
                         
                         // Send email notification for auto-cancellation
                         if (userEmail != null && fullName != null) {
-                            EmailService.sendReservationCancelled(userEmail, fullName, String.valueOf(reservationCode));
+                            System.out.println("Auto-cancellation notification would be sent to: " + userEmail);
                         }
                         
                         System.out.println(String.format(
@@ -228,7 +227,7 @@ public class SimpleAutoCancellationService {
             if (updated > 0) {
                 // Send late pickup email notification
                 if (userEmail != null && fullName != null) {
-                    EmailService.sendLatePickupNotification(userEmail, fullName);
+                    System.out.println("Late pickup notification would be sent to: " + userEmail);
                 }
                 return true;
             }

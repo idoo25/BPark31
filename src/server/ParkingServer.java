@@ -26,31 +26,63 @@ import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
 import serverGUI.ServerPortFrame;
 
+/**
+ * ParkingServer handles client-server communication using singleton pattern.
+ * Extends OCSF AbstractServer to manage parking system client connections and message handling.
+ */
 public class ParkingServer extends AbstractServer {
 
-    final public static Integer DEFAULT_PORT = 5555;
-
+    private static final Integer DEFAULT_PORT = 5555;
+    private static ParkingServer instance;
+    
     public static ParkingController parkingController;
     public static ReportController reportController;
     public static ServerPortFrame spf;
 
-    public Map<ConnectionToClient, String> clientsMap = new HashMap<>();
-    public static String serverIp;
+    private final Map<ConnectionToClient, String> clientsMap = new HashMap<>();
+    private static String serverIp;
 
     private ScheduledExecutorService connectionPoolTimer;
-    private final int POOL_SIZE = 5;
-    private final int TIMER_INTERVAL = 30;
+    private static final int POOL_SIZE = 5;
+    private static final int TIMER_INTERVAL = 30;
 
-    public ParkingServer(int port) {
+    /**
+     * Private constructor for singleton pattern.
+     * @param port Server port number
+     */
+    private ParkingServer(int port) {
         super(port);
         try {
             serverIp = InetAddress.getLocalHost().getHostAddress() + ":" + port;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error getting server IP: " + e.getMessage());
         }
         initializeConnectionPool();
     }
+    
+    /**
+     * Returns singleton instance of ParkingServer.
+     * @param port Server port number
+     * @return ParkingServer instance
+     */
+    public static synchronized ParkingServer getInstance(int port) {
+        if (instance == null) {
+            instance = new ParkingServer(port);
+        }
+        return instance;
+    }
+    
+    /**
+     * Returns singleton instance of ParkingServer with default port.
+     * @return ParkingServer instance
+     */
+    public static synchronized ParkingServer getInstance() {
+        return getInstance(DEFAULT_PORT);
+    }
 
+    /**
+     * Initializes connection pool monitoring timer.
+     */
     private void initializeConnectionPool() {
         connectionPoolTimer = Executors.newScheduledThreadPool(POOL_SIZE);
         connectionPoolTimer.scheduleAtFixedRate(() -> {
@@ -61,10 +93,18 @@ public class ParkingServer extends AbstractServer {
         }, 0, TIMER_INTERVAL, TimeUnit.SECONDS);
     }
 
+    /**
+     * Removes inactive client connections from the map.
+     */
     private synchronized void cleanupInactiveConnections() {
         clientsMap.entrySet().removeIf(entry -> !entry.getKey().isAlive());
     }
 
+    /**
+     * Handles incoming messages from clients.
+     * @param msg Message object from client
+     * @param client Client connection
+     */
     public synchronized void handleMessageFromClient(Object msg, ConnectionToClient client) {
         System.out.println("Message received: " + msg + " from " + client);
 
