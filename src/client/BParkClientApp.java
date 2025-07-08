@@ -6,21 +6,15 @@ import controllers.ManagerController;
 import controllers.SubscriberController;
 import controllers.UpdateProfileController;
 import entities.Message;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import ocsf.client.ObservableClient;
 
 
 
-public class BParkClientApp extends Application {
-
-    private static BParkClient client;
-    private static String serverIP = "localhost";
-    private static int serverPort = 5555;
+public class BParkClientApp extends BParkBaseApp {
     
   	private static AttendantController attendantController;
 	  private static ManagerController managerController;
@@ -56,16 +50,15 @@ public class BParkClientApp extends Application {
     }
     
     public static void connectToServer() {
-        try {
-            client = new BParkClient(serverIP, serverPort);
-            client.openConnection();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        BParkBaseApp.connectToServer();
     }
     
     public static boolean isConnected() {
-        return client != null && client.isConnected();
+        return BParkBaseApp.isConnected();
+    }
+    
+    public static void setServerIP(String ip) {
+        BParkBaseApp.setServerIP(ip);
     }
     
     public static void switchToMainScreen(String userType) {
@@ -114,74 +107,19 @@ public class BParkClientApp extends Application {
         }
     }
     
-    // Client communication class
-    static class BParkClient extends ObservableClient {
-        public BParkClient(String host, int port) {
-            super(host, port);
-        }
-        
-        @Override
-        protected void handleMessageFromServer(Object msg) {
-            Platform.runLater(() -> {
-                try {
-                    Object message = msg;
-                    if (message instanceof byte[]) {
-                        message = ClientMessageHandler.deserialize(message);
-                    }
-                    
-                    if (message instanceof Message) {
-                        ClientMessageHandler.handleMessage((Message) message);
-                    } else if (message instanceof String) {
-                        ClientMessageHandler.handleStringMessage((String) message);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-        
-        @Override
-        protected void connectionClosed() {
-            Platform.runLater(() -> {
-                System.out.println("Connection closed");
-                // Show reconnect dialog
-            });
-        }
-        
-        @Override
-        protected void connectionException(Exception exception) {
-            Platform.runLater(() -> {
-                System.out.println("Connection error: " + exception.getMessage());
-                // Show error dialog
-            });
-        }
-    }
-    
     // Utility methods for sending messages
     public static void sendMessage(Message msg) {
-        try {
-            if (client != null && client.isConnected()) {
-                client.sendToServer(ClientMessageHandler.serialize(msg));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        BParkBaseApp.sendMessage(msg);
     }
     
     public static void sendStringMessage(String msg) {
-        try {
-            if (client != null && client.isConnected()) {
-                client.sendToServer(msg);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        BParkBaseApp.sendStringMessage(msg);
     }
     
     // Getters and setters
     
     public static BParkClient getClient() {
-        return client;
+        return (BParkClient) BParkBaseApp.getClient();
     } 
     public static String getCurrentUser() {
         return currentUser;
@@ -199,25 +137,9 @@ public class BParkClientApp extends Application {
         userType = type;
     }
     
-    public static void setServerIP(String ip) {
-        serverIP = ip;
-    }
-    
-    public static void disconnect() {
-        try {
-            if (client != null && client.isConnected()) {
-                client.sendToServer("ClientDisconnect");
-                client.closeConnection();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-    
     @Override
     public void stop() throws Exception {
         // Clean up when application closes
-        disconnect();
         super.stop();
     }
     
